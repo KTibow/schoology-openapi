@@ -354,6 +354,8 @@ RecentFeed:
     operationId: listRecentFeed
     x-student-access: ok
     x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
     responses:
       '200':
         description: A paged collection of updates from every realm the user belongs to.
