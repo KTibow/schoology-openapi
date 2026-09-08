@@ -1,0 +1,222 @@
+UserWritable:
+  type: object
+  title: User (writable fields)
+  description: Fields accepted by POST/PUT on user endpoints. See `User` for the read shape.
+  properties:
+    school_uid: { type: string, description: The user's unique ID (e.g. student/SIS ID). Required in most schools. }
+    name_title: { type: string, description: 'One of Mr., Mrs., Ms., Miss, Dr., or Professor.' }
+    name_title_show: { $ref: 'common.yaml#/BinaryFlag' }
+    name_first: { type: string, description: Required. }
+    name_first_preferred: { type: string }
+    name_middle: { type: string }
+    name_middle_show: { $ref: 'common.yaml#/BinaryFlag' }
+    name_last: { type: string, description: Required. }
+    username: { type: string, description: Username (a username or primary_email is required). }
+    primary_email: { type: string, description: Primary email (a username or primary_email is required). }
+    position: { type: string, description: Job position. }
+    gender: { type: string, enum: [M, F], description: "`M` or `F`." }
+    grad_year: { type: [string, integer], description: Graduation year (YYYY). }
+    birthday_date: { type: string, description: Birthday (YYYY-MM-DD). }
+    password: { type: string, description: Existing passwords are not changed if left blank. }
+    role_id: { $ref: 'common.yaml#/SchoologyId', description: Required. ID of the role to assign. }
+    email_login_info: { $ref: 'common.yaml#/BinaryFlag', description: Email the login info on creation (creation only). }
+    profile_picture_fid: { type: integer, description: 'File ID from the upload flow used to set the profile picture.' }
+    tz_name: { type: string, description: IANA timezone name. }
+    parent_uids: { type: string, description: Comma-delimited parent user IDs to associate. }
+    advisor_uids: { type: string, description: Comma-delimited advisor user IDs to associate. }
+    synced: { $ref: 'common.yaml#/BinaryFlag', description: Mark as synced with an external system. }
+    language: { type: string, description: Interface language code (see `GET /users/languages`). }
+    subjects_taught: { type: string }
+    grades_taught: { type: string }
+    department: { type: string }
+    bio: { type: string }
+    phone: { type: string }
+    website: { type: string }
+    address: { type: string }
+    interests: { type: string }
+    activities: { type: string }
+  additionalProperties: false
+UserCreate:
+  type: object
+  title: User create
+  description: Body for creating user(s). A username or primary_email is required.
+  allOf:
+    - $ref: '#/UserWritable'
+    - type: object
+      required: [name_first, name_last, role_id]
+User:
+  type: object
+  title: User
+  description: |
+    A Schoology account as returned by GET endpoints. `uid` is the string form
+    of `id`. Fields marked *write-only* below are accepted on POST/PUT but are
+    never returned.
+  properties:
+    uid: { type: string, description: The internal Schoology ID of the user (string form of `id`). }
+    id: { type: integer, description: The internal Schoology ID of the user. }
+    school_id: { $ref: 'common.yaml#/SchoologyId', description: Schoology ID of the school the user belongs to. }
+    building_id: { $ref: 'common.yaml#/SchoologyId', description: Schoology ID of the school building. }
+    additional_buildings: { type: [string, "null"], description: Comma-delimited building IDs the user also belongs to. }
+    school_uid: { type: [string, "null"], description: The user's unique ID (e.g. student/SIS ID). }
+    name_title: { type: string }
+    name_title_show: { $ref: 'common.yaml#/BinaryFlag' }
+    name_first: { type: string }
+    name_first_preferred: { type: string }
+    use_preferred_first_name: { type: string, description: Undocumented; `"1"` when the preferred name is used for display. }
+    name_middle: { type: [string, "null"] }
+    name_middle_show: { $ref: 'common.yaml#/BinaryFlag' }
+    name_last: { type: string }
+    name_display: { type: string, description: Fully-constructed display name; read-only. }
+    username: { type: [string, "null"] }
+    primary_email: { type: [string, "null"] }
+    position: { type: [string, "null"] }
+    gender: { type: [string, "null"], description: "`M`, `F`, or null." }
+    grad_year: { type: [string, integer] }
+    birthday_date: { type: [string, "null"], description: YYYY-MM-DD. }
+    role_id: { $ref: 'common.yaml#/SchoologyId' }
+    password: { type: [string, "null"], description: Always empty on reads (accepted on write). }
+    profile_url: { type: [string, "null"], format: uri, description: Full URL of the profile picture. }
+    picture_url: { type: [string, "null"], description: Full URL of the profile picture (alternate key seen on some reads). }
+    tz_name: { type: [string, "null"], description: IANA timezone name. }
+    tz_offset: { type: [integer, string], description: Timezone offset in hours. }
+    parents:
+      type: [array, "null"]
+      description: Parent user accounts; requires the *View user parents* permission.
+      items: { $ref: '#/User' }
+    child_uids: { type: [string, array, "null"], items: { type: integer }, description: Comma-delimited user IDs of the user's children. }
+    send_message: { type: [integer, string], description: Whether the signed-in user can message this user. }
+    synced: { $ref: 'common.yaml#/BinaryFlag', description: Synced users' `school_uid` is not editable. }
+    language: { type: [string, "null"], description: Interface language code. }
+    permissions:
+      type: [object, "null"]
+      description: Permission flags carried on the user object; undocumented.
+      properties:
+        is_directory_public: { $ref: 'common.yaml#/BinaryFlag' }
+        allow_connections: { $ref: 'common.yaml#/BinaryFlag' }
+      additionalProperties: false
+    subjects_taught: { type: [string, "null"] }
+    grades_taught: { type: [string, "null"] }
+    department: { type: [string, "null"] }
+    bio: { type: [string, "null"] }
+    phone: { type: [string, "null"] }
+    website: { type: [string, "null"] }
+    address: { type: [string, "null"] }
+    interests: { type: [string, "null"] }
+    activities: { type: [string, "null"] }
+    links: { $ref: 'common.yaml#/Links' }
+  # Write-only, never returned: password, profile_picture_fid, email_login_info,
+  # parent_uids, advisor_uids (see UserWritable).
+  required: [id]
+  additionalProperties: false
+UserCollection:
+  type: object
+  title: User collection
+  properties:
+    user:
+      type: array
+      items: { $ref: '#/User' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+UserInactive:
+  type: object
+  title: Inactive user
+  description: Shape returned by the inactive-user endpoints (a reduced user object).
+  properties:
+    uid: { $ref: 'common.yaml#/SchoologyId' }
+    name: { type: string, description: Display name. }
+    school_uid: { type: [string, "null"] }
+    synced: { $ref: 'common.yaml#/BinaryFlag' }
+    inactive_timestamp: { type: [integer, string], description: Unix timestamp when the user was deactivated. }
+    modified_by_uid: { $ref: 'common.yaml#/SchoologyId', description: User who deactivated this account. }
+  additionalProperties: false
+UserInactiveCollection:
+  type: object
+  title: Inactive user collection
+  properties:
+    user:
+      type: array
+      items: { $ref: '#/UserInactive' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+UserBulkInput:
+  type: object
+  title: Users bulk input
+  description: Wrapper for bulk user create/update bodies (up to 50).
+  properties:
+    users:
+      type: object
+      properties:
+        user:
+          type: array
+          items: { $ref: '#/UserCreate' }
+      additionalProperties: false
+  additionalProperties: false
+UserReactivateInput:
+  type: object
+  title: Users reactivate input
+  properties:
+    user:
+      type: array
+      description: Users to reactivate; `option_reenroll` re-enrolls them in courses/groups.
+      items:
+        type: object
+        properties:
+          uid: { $ref: 'common.yaml#/SchoologyId' }
+          option_reenroll: { $ref: 'common.yaml#/BinaryFlag' }
+        additionalProperties: false
+  additionalProperties: false
+UserBulkResult:
+  type: object
+  title: User bulk result
+  description: Row of the bulk user create/update/reactivate results.
+  properties:
+    response_code: { type: [integer, string] }
+    location: { type: [string, "null"], format: uri }
+    school_uid: { type: [string, "null"] }
+    id: { $ref: 'common.yaml#/NullableSchoologyId' }
+    message: { type: [string, "null"] }
+    error: { type: [string, "null"] }
+  additionalProperties: false
+Languages:
+  type: object
+  properties:
+    language:
+      type: array
+      items:
+        type: object
+        properties:
+          language_code: { type: string, examples: [en] }
+          language_name: { type: string, examples: [English] }
+        additionalProperties: false
+  additionalProperties: false
+AppUserInfo:
+  type: object
+  description: Returned by `GET /app-user-info` — validates the token against a web session.
+  properties:
+    web_session_timestamp: { type: [integer, string], description: Unix timestamp of the web session. }
+    api_uid: { $ref: 'common.yaml#/SchoologyId', description: User ID the OAuth tokens resolve to. }
+  additionalProperties: false
+AssociationInput:
+  type: object
+  description: Parent/advisor association row for the import endpoints.
+  required: [student_school_uid]
+  properties:
+    student_school_uid: { type: string }
+    parent_school_uid: { type: string, description: For the parents import. }
+    advisor_school_uid: { type: string, description: For the advisors import. }
+    delete: { $ref: 'common.yaml#/BinaryFlag', description: Delete this association if it exists. }
+  additionalProperties: false
+AssociationResult:
+  type: object
+  properties:
+    response_code: { type: [integer, string] }
+    student_school_uid: { type: [string, "null"] }
+    student_uid: { type: [string, "null"] }
+    parent_school_uid: { type: [string, "null"] }
+    parent_uid: { type: [string, "null"] }
+    advisor_school_uid: { type: [string, "null"] }
+    advisor_uid: { type: [string, "null"] }
+    error: { type: [string, "null"] }
+  additionalProperties: false

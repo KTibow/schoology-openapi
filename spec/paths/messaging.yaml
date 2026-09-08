@@ -1,0 +1,255 @@
+MessagesCreate:
+  post:
+    tags: [Messaging]
+    summary: Create a message
+    description: >
+      Send a private message. `recipient_ids` is a comma-delimited string of
+      user ids. Replies to an existing thread use `POST /messages/{id}` with
+      the thread's id.
+    operationId: createMessage
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/MessageCreate' }
+    responses:
+      '201':
+        description: The created message.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Message' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+MessageRecipients:
+  get:
+    tags: [Messaging]
+    summary: List messageable users
+    description: Valid message recipients for the signed-in user.
+    operationId: listMessageRecipients
+    x-student-access: ok
+    x-verified: true
+    responses:
+      '200':
+        description: Recipient list.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Recipients' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+
+MessageInbox:
+  get:
+    tags: [Messaging]
+    summary: List inbox messages
+    description: >
+      Paged list of messages in the signed-in user's inbox, including
+      `unread_count`. `with_attachments=TRUE` includes attachments.
+
+    operationId: listInbox
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+    responses:
+      '200':
+        description: Inbox messages.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/MessageCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+
+MessageSent:
+  get:
+    tags: [Messaging]
+    summary: List sent messages
+    description: Paged list of messages in the signed-in user's sent folder.
+    operationId: listSent
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+    responses:
+      '200':
+        description: Sent messages.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/MessageCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+
+MessageInboxItem:
+  get:
+    tags: [Messaging]
+    summary: Get an inbox message
+    description: >
+      View an individual inbox message (this is the canonical single-message
+      URL, as linked from the inbox listing). Marks the thread read unless
+      `keep_unread=TRUE`; `with_attachments=TRUE` includes attachments.
+      Reads under `/messages/{id}` return 400.
+    operationId: getInboxMessage
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/message_id'
+      - name: keep_unread
+        in: query
+        description: Set to `TRUE` to avoid marking the thread read.
+        schema: { type: string, enum: ["TRUE"] }
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+    responses:
+      '200':
+        description: The message (or thread).
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/MessageCollection' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Messaging]
+    summary: Update an inbox message's status
+    description: Set `message_status` to `read` or `unread`.
+    operationId: updateInboxMessage
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/message_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/MessageStatusInput' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+MessageItem:
+  get:
+    tags: [Messaging]
+    summary: Get a message thread
+    description: >
+      View an individual message; if it is part of a thread, all related thread
+      messages are returned. Marks the thread read unless `keep_unread=TRUE`;
+      `with_attachments=TRUE` includes attachments. In practice reads under
+      `/messages/{id}` return 400 — use `GET /messages/inbox/{id}`.
+    operationId: getMessage
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/message_id'
+      - name: keep_unread
+        in: query
+        description: Set to `TRUE` to avoid marking the thread read.
+        schema: { type: string, enum: ["TRUE"] }
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+    responses:
+      '200':
+        description: The message (or thread).
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/MessageCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  post:
+    tags: [Messaging]
+    summary: Reply to a thread
+    description: >
+      Reply to an existing thread by posting to the thread's id; marks the
+      thread read unless `keep_unread=TRUE`.
+    operationId: replyToMessage
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/message_id'
+      - name: keep_unread
+        description: Set to `TRUE` to avoid marking the thread read.
+        in: query
+        schema: { type: string, enum: ["TRUE"] }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/MessageCreate' }
+    responses:
+      '201':
+        description: The created reply.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Message' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  delete:
+    tags: [Messaging]
+    summary: Delete a message
+    description: >
+      Delete a message (cannot be undone). Deleting from the sent folder does
+      not un-send the message.
+    operationId: deleteMessage
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/message_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+GlobalReminders:
+  get:
+    tags: [Messaging]
+    summary: List reminders across all realms
+    description: >
+      Reminders for section admins — `ungraded` (assignments with ungraded
+      revisions) or `resubmitted` (assignments with unviewed revisions).
+      Supports `with_attachments`.
+    x-verified: true
+    operationId: listGlobalReminders
+    x-student-access: ok
+    parameters:
+      - name: type
+        in: path
+        description: Limit results to one kind (`user`, `group`, `course` for search; realm type for enrollments).
+        required: true
+        schema: { type: string, enum: [ungraded, resubmitted] }
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+    responses:
+      '200':
+        description: Reminders.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Reminders' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+SectionReminders:
+  get:
+    tags: [Messaging]
+    summary: List reminders for a section
+    description: Realm-specific reminders; same types as the global endpoint.
+    operationId: listSectionReminders
+    x-student-access: forbidden
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - name: type
+        in: path
+        description: Limit results to one kind (`user`, `group`, `course` for search; realm type for enrollments).
+        required: true
+        schema: { type: string, enum: [ungraded, resubmitted] }
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+    responses:
+      '200':
+        description: Reminders.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Reminders' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }

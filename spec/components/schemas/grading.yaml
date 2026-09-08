@@ -1,0 +1,246 @@
+GradingPeriodWritable:
+  type: object
+  title: Grading period (writable fields)
+  properties:
+    title: { type: string, description: Required; unique across the school's grading periods. }
+    start: { type: string, description: Required. `YYYY-MM-DD`. }
+    end: { type: string, description: Required. `YYYY-MM-DD`. }
+  additionalProperties: false
+GradingPeriodCreate:
+  type: object
+  title: Grading period create
+  allOf:
+    - $ref: '#/GradingPeriodWritable'
+    - type: object
+      required: [title, start, end]
+GradingPeriod:
+  type: object
+  title: Grading period
+  description: |
+    A marking period. Grading periods are what make a course section active:
+    a section spans one or more of them (`grading_periods`), and assignments
+    file their grades under one, so an expired period is why a section stops
+    showing up without `include_past=1`.
+
+    School-level grading periods (`/gradingperiods`, admin only) use
+    `YYYY-MM-DD` dates; the section-level listing
+    (`/sections/{id}/grading_periods`) adds `weight`, `parent` and
+    `has_children` and uses datetime strings.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: string }
+    start: { type: [string, "null"], description: "`YYYY-MM-DD`, or with time on section reads." }
+    end: { type: [string, "null"], description: "`YYYY-MM-DD`, or with time on section reads." }
+    active: { $ref: 'common.yaml#/BinaryFlag' }
+    weight: { type: [integer, number, string, "null"], description: "Grade weight (section-level reads)." }
+    parent: { type: [integer, string], description: "Parent period id, `0` for top-level; undocumented." }
+    has_children: { type: [integer, string, boolean], description: True/1 when the period has child periods. }
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id]
+  additionalProperties: false
+GradingPeriodCollection:
+  type: object
+  title: Grading period collection (school)
+  properties:
+    gradingperiods:
+      type: array
+      items: { $ref: '#/GradingPeriod' }
+    total: { $ref: 'common.yaml#/Total' }
+  additionalProperties: false
+SectionGradingPeriodCollection:
+  type: object
+  title: Section grading period collection
+  properties:
+    grading_period:
+      type: array
+      items: { $ref: '#/GradingPeriod' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+GradingCategoryWritable:
+  type: object
+  title: Grading category (writable fields)
+  properties:
+    title: { type: string }
+    calculation_type: { type: integer, enum: [1, 2], description: "`1` percent, `2` total points." }
+    default_max_points: { type: number }
+    default_grading_scale_id: { type: integer, description: "`0` for numeric grading, otherwise the grading scale id." }
+    drop_lowest: { type: integer, minimum: 0, maximum: 10 }
+    weight: { type: integer, description: Category weight. }
+    delta: { type: integer, description: List order. }
+  additionalProperties: false
+GradingCategory:
+  type: object
+  title: Grading category
+  description: |
+    A grading category in a section. Required for grading — assignments without
+    a category are ungraded. Anyone enrolled can list a section's categories;
+    creating and updating them is an admin/teacher operation.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: [string, "null"] }
+    calculation_type: { type: [integer, string], description: "`1` percent, `2` total points." }
+    default_max_points: { type: [number, string, "null"] }
+    default_grading_scale_id: { $ref: 'common.yaml#/NullableSchoologyId', description: Bulk results name this `default_grading_scale`. }
+    default_grading_scale: { type: [integer, string, "null"], description: Alias seen in bulk responses. }
+    drop_lowest: { type: [integer, string] }
+    weight: { type: [integer, string, number, "null"] }
+    delta: { type: [integer, string] }
+    realm: { type: [string, "null"], description: Owning realm (e.g. `course`) — on individual reads. }
+    realm_id: { $ref: 'common.yaml#/NullableSchoologyId' }
+    uid: { $ref: 'common.yaml#/NullableSchoologyId', description: 'Creator; undocumented, and only comes back on update responses.' }
+    response_code: { type: [integer, string], description: In bulk results. }
+  required: [id]
+  additionalProperties: false
+GradingCategoryCollection:
+  type: object
+  title: Grading category collection
+  properties:
+    grading_category:
+      type: array
+      items: { $ref: '#/GradingCategory' }
+  additionalProperties: false
+GradingCategoriesBulkInput:
+  type: object
+  title: Grading categories bulk input
+  properties:
+    grading_categories:
+      type: object
+      properties:
+        grading_category:
+          type: array
+          items:
+            type: object
+            allOf:
+              - $ref: '#/GradingCategoryWritable'
+            properties:
+              id: { $ref: 'common.yaml#/SchoologyId', description: Bulk updates identify the category by `id`. }
+            additionalProperties: false
+      additionalProperties: false
+  additionalProperties: false
+GradingScaleLevel:
+  type: object
+  description: One level of a grading scale. Percent-type scales use `grade`/`cutoff`/`average`; point-type scales use `points`/`description`.
+  properties:
+    grade: { type: [string, "null"] }
+    cutoff: { type: [number, string, "null"], description: Minimum percent for this level. }
+    average: { type: [number, string, "null"] }
+    points: { type: [number, string, "null"], description: Point value for point-type scales. }
+    description: { type: [string, "null"] }
+  additionalProperties: false
+GradingScale:
+  type: object
+  title: Grading scale
+  description: >
+    Maps numeric grades to letters/levels (`type` `1` percent, `3` points, `0`
+    numeric). Read-only via the API; students can read their section's scales.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: [string, "null"] }
+    type: { type: [integer, string], description: "`1` percent-type, `3` point-type, `0` numeric." }
+    auto_averaging: { $ref: 'common.yaml#/BinaryFlag' }
+    hide_numeric: { $ref: 'common.yaml#/BinaryFlag', description: Students see only the letter/point grade. }
+    scale:
+      type: [object, "null"]
+      properties:
+        level:
+          type: array
+          items: { $ref: '#/GradingScaleLevel' }
+      additionalProperties: false
+  required: [id]
+  additionalProperties: false
+GradingScaleCollection:
+  type: object
+  title: Grading scale collection
+  properties:
+    grading_scale:
+      type: array
+      items: { $ref: '#/GradingScale' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+RubricRating:
+  type: object
+  properties:
+    points: { type: [integer, string] }
+    description: { type: [string, "null"] }
+  additionalProperties: false
+RubricCriterion:
+  type: object
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: [string, "null"] }
+    description: { type: [string, "null"] }
+    max_points: { type: [integer, string] }
+    weight: { type: [integer, string] }
+    ratings:
+      type: array
+      items: { $ref: '#/RubricRating' }
+  additionalProperties: false
+GradingRubric:
+  type: object
+  title: Grading rubric
+  description: A rubric used to grade assignments and discussions.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    created: { $ref: 'common.yaml#/Timestamp' }
+    title: { type: [string, "null"] }
+    total_points: { type: [integer, string] }
+    realm: { type: [string, "null"], examples: [section] }
+    realm_id: { $ref: 'common.yaml#/NullableSchoologyId' }
+    criteria:
+      type: array
+      items: { $ref: '#/RubricCriterion' }
+  required: [id]
+  additionalProperties: false
+GradingRubricCollection:
+  type: object
+  title: Grading rubric collection
+  properties:
+    grading_rubric:
+      type: array
+      items: { $ref: '#/GradingRubric' }
+    total: { $ref: 'common.yaml#/Total' }
+  additionalProperties: false
+GradingGroupWritable:
+  type: object
+  title: Grading group (writable fields)
+  properties:
+    title: { type: string, description: Required. }
+    members: { type: array, description: 'Enrollment IDs in this grading group.', items: { type: integer } }
+  additionalProperties: false
+GradingGroup:
+  type: object
+  title: Grading group
+  description: A group of students (by enrollment id) inside a section that can be assigned content.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: [string, "null"] }
+    section_id: { $ref: 'common.yaml#/NullableSchoologyId' }
+    members:
+      type: [array, "null"]
+      description: Enrollment IDs in this grading group.
+      items: { type: integer }
+    response_code: { type: [integer, string], description: In bulk results. }
+  required: [id]
+  additionalProperties: false
+GradingGroupCollection:
+  type: object
+  title: Grading group collection
+  properties:
+    grading_groups:
+      type: array
+      items: { $ref: '#/GradingGroup' }
+    count: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+GradingGroupsBulkInput:
+  type: object
+  title: Grading groups bulk input
+  properties:
+    grading_groups:
+      type: object
+      properties:
+        grading_group:
+          type: array
+          items: { $ref: '#/GradingGroupWritable' }
+      additionalProperties: false
+  additionalProperties: false

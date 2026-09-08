@@ -1,0 +1,268 @@
+/users:
+  $ref: './users.yaml#/UsersCollection'
+/users/me:
+  $ref: './users.yaml#/UsersMe'
+/users/inactive:
+  $ref: './users.yaml#/UsersInactiveCollection'
+/users/inactive/{id}:
+  $ref: './users.yaml#/UsersInactiveItem'
+/users/ext/{id}:
+  $ref: './users.yaml#/UsersExt'
+/users/languages:
+  $ref: './users.yaml#/UsersLanguages'
+/users/{user_id}:
+  $ref: './users.yaml#/UsersItem'
+/users/{user_id}/sections:
+  $ref: './users.yaml#/UserSections'
+/users/{user_id}/groups:
+  $ref: './users.yaml#/UserGroups'
+/users/{user_id}/grades:
+  $ref: './users.yaml#/UserGrades'
+/users/{user_id}/network:
+  $ref: './users.yaml#/UserNetwork'
+/users/{user_id}/requests/friends:
+  $ref: './users.yaml#/UserFriendRequests'
+/users/{user_id}/requests/friends/{id}:
+  $ref: './users.yaml#/UserFriendRequest'
+/users/{user_id}/invites/{realm}:
+  $ref: './users.yaml#/UserInvites'
+/users/{user_id}/invites/{realm}/{id}:
+  $ref: './users.yaml#/UserInvite'
+/app-user-info:
+  $ref: './users.yaml#/AppUserInfo'
+/users/reactivate:
+  $ref: './users.yaml#/UsersReactivate'
+/csvexport/users:
+  $ref: './users.yaml#/CsvExportUsers'
+/users/import/associations/parents:
+  $ref: './users.yaml#/ImportParents'
+/users/import/associations/advisors:
+  $ref: './users.yaml#/ImportAdvisors'
+
+/courses:
+  $ref: './courses.yaml#/CoursesCollection'
+/courses/{course_id}:
+  $ref: './courses.yaml#/CourseItem'
+/courses/{course_id}/sections:
+  $ref: './courses.yaml#/CourseSections'
+
+/sections:
+  $ref: './sections.yaml#/SectionsCollection'
+/sections/copy:
+  $ref: './sections.yaml#/SectionsCopy'
+/sections/ext/{id}:
+  $ref: './sections.yaml#/SectionsExt'
+/sections/{section_id}:
+  $ref: './sections.yaml#/SectionItem'
+
+/enrollments:
+  $ref: './enrollments.yaml#/EnrollmentsMultiRealm'
+/enrollments/import/course/{grading_period_id}:
+  $ref: './enrollments.yaml#/EnrollmentsImportByPeriod'
+/enrollments/import/course:
+  $ref: './enrollments.yaml#/EnrollmentsImportByCode'
+
+/groups:
+  $ref: './groups.yaml#/GroupsCollection'
+/groups/categories:
+  $ref: './groups.yaml#/GroupCategories'
+/groups/{group_id}:
+  $ref: './groups.yaml#/GroupItem'
+
+/schools:
+  $ref: './schools.yaml#/SchoolsCollection'
+/schools/{school_id}:
+  $ref: './schools.yaml#/SchoolItem'
+/schools/{school_id}/buildings:
+  $ref: './schools.yaml#/SchoolBuildings'
+/csvexport/group_enrollments:
+  $ref: './enrollments.yaml#/CsvExportGroupEnrollments'
+
+/triggers/targets:
+  $ref: './misc.yaml#/TriggerTargets'
+/triggers/targets/{target_id}:
+  $ref: './misc.yaml#/TriggerTargetItem'
+/triggers/subscriptions:
+  $ref: './misc.yaml#/TriggerSubscriptions'
+
+/recent:
+  $ref: './misc.yaml#/RecentFeed'
+
+/roles:
+  $ref: './misc.yaml#/RolesCollection'
+/roles/{id}:
+  $ref: './misc.yaml#/RoleItem'
+/search:
+  $ref: './misc.yaml#/Search'
+
+/messages:
+  $ref: './messaging.yaml#/MessagesCreate'
+/messages/recipients:
+  $ref: './messaging.yaml#/MessageRecipients'
+/messages/inbox:
+  $ref: './messaging.yaml#/MessageInbox'
+/messages/sent:
+  $ref: './messaging.yaml#/MessageSent'
+/messages/inbox/{message_id}:
+  $ref: './messaging.yaml#/MessageInboxItem'
+/messages/{message_id}:
+  $ref: './messaging.yaml#/MessageItem'
+
+/gradingperiods:
+  $ref: './grading.yaml#/GradingPeriodsCollection'
+/gradingperiods/{grading_period_id}:
+  $ref: './grading.yaml#/GradingPeriodItem'
+/like/{id}:
+  $ref: './misc.yaml#/LikeUpdate'
+/like/{id}/comment/{comment_id}:
+  $ref: './misc.yaml#/LikeComment'
+/poll/{id}/vote:
+  $ref: './misc.yaml#/PollVote'
+/collections:
+  $ref: './resources.yaml#/CollectionsCollection'
+/collections/{collection_id}:
+  $ref: './resources.yaml#/CollectionItem'
+/collections/{collection_id}/resources:
+  $ref: './resources.yaml#/CollectionResources'
+/collections/{collection_id}/resources/{template_id}:
+  $ref: './resources.yaml#/CollectionResourceItem'
+/upload:
+  $ref: './files.yaml#/Upload'
+/upload/{id}:
+  $ref: './files.yaml#/UploadPut'
+/multiget:
+  $ref: './misc.yaml#/Multiget'
+/multioptions:
+  $ref: './misc.yaml#/Multioptions'
+
+/sections/{section_id}/assignments:
+  $ref: './section-content.yaml#/Assignments'
+/sections/{section_id}/assignments/{assignment_id}:
+  $ref: './section-content.yaml#/AssignmentItem'
+/sections/{section_id}/assignments/{assignment_id}/comments:
+  $ref: './section-content.yaml#/AssignmentComments'
+/sections/{section_id}/assignments/{assignment_id}/comments/{comment_id}:
+  $ref: './section-content.yaml#/AssignmentComment'
+/sections/{section_id}/grade_items:
+  $ref: './section-content.yaml#/GradeItems'
+/sections/{section_id}/grade_items/{assignment_id}:
+  $ref: './section-content.yaml#/GradeItem'
+/sections/{section_id}/submissions/{grade_item_id}:
+  $ref: './submissions.yaml#/Submissions'
+/sections/{section_id}/submissions/{grade_item_id}/file:
+  $ref: './submissions.yaml#/SubmissionCreateFile'
+/sections/{section_id}/submissions/{grade_item_id}/create:
+  $ref: './submissions.yaml#/SubmissionCreateText'
+/sections/{section_id}/submissions/{grade_item_id}/{user_id}:
+  $ref: './submissions.yaml#/UserSubmissions'
+/sections/{section_id}/submissions/{grade_item_id}/{user_id}/revision/{revision_id}:
+  $ref: './submissions.yaml#/SubmissionRevision'
+/sections/{section_id}/submissions/{grade_item_id}/{user_id}/comments:
+  $ref: './submissions.yaml#/SubmissionComments'
+/sections/{section_id}/submissions/{grade_item_id}/{user_id}/comments/{comment_id}:
+  $ref: './submissions.yaml#/SubmissionComment'
+/sections/{section_id}/grades:
+  $ref: './grading.yaml#/SectionGrades'
+/sections/{section_id}/grading_periods:
+  $ref: './grading.yaml#/SectionGradingPeriods'
+/sections/{section_id}/grading_categories:
+  $ref: './grading.yaml#/SectionGradingCategories'
+/sections/{section_id}/grading_categories/{id}:
+  $ref: './grading.yaml#/SectionGradingCategory'
+/sections/{section_id}/grading_scales:
+  $ref: './grading.yaml#/SectionGradingScales'
+/sections/{section_id}/grading_rubrics:
+  $ref: './grading.yaml#/SectionGradingRubrics'
+/sections/{section_id}/grading_rubrics/{id}:
+  $ref: './grading.yaml#/SectionGradingRubric'
+/sections/{section_id}/grading_groups:
+  $ref: './grading.yaml#/SectionGradingGroups'
+/sections/{section_id}/grading_groups/{id}:
+  $ref: './grading.yaml#/SectionGradingGroup'
+/sections/{section_id}/attendance:
+  $ref: './grading.yaml#/SectionAttendance'
+/sections/{section_id}/completion:
+  $ref: './grading.yaml#/SectionCompletion'
+/sections/{section_id}/completion/user/{user_id}/{id}:
+  $ref: './grading.yaml#/SectionCompletionUser'
+/sections/{section_id}/packages:
+  $ref: './section-content.yaml#/ScormPackages'
+/sections/{section_id}/package/{id}:
+  $ref: './section-content.yaml#/ScormPackage'
+/sections/{section_id}/web_packages:
+  $ref: './section-content.yaml#/WebPackages'
+/sections/{section_id}/web_packages/{id}:
+  $ref: './section-content.yaml#/WebPackage'
+/reminders/{type}:
+  $ref: './messaging.yaml#/GlobalReminders'
+/sections/{section_id}/reminders/{type}:
+  $ref: './messaging.yaml#/SectionReminders'
+
+/groups/{group_id}/enrollments:
+  $ref: './enrollments.yaml#/RealmEnrollments'
+/groups/{group_id}/enrollments/{id}:
+  $ref: './enrollments.yaml#/RealmEnrollmentItem'
+/groups/{group_id}/accesscode:
+  $ref: './enrollments.yaml#/RealmAccessCode'
+
+/sections/{section_id}/enrollments:
+  $ref: './enrollments.yaml#/SectionEnrollments'
+/sections/{section_id}/enrollments/{id}:
+  $ref: './enrollments.yaml#/SectionEnrollmentItem'
+/sections/{section_id}/accesscode:
+  $ref: './enrollments.yaml#/SectionAccessCode'
+
+# Realm-generic material endpoints. `{realm}` is constrained per path item
+# to the realms that actually support that material (see realm-content.yaml).
+/{realm}/{realm_id}/folder/{folder_id}:
+  $ref: './courses.yaml#/RealmFolder'
+/{realm}/{realm_id}/resources:
+  $ref: './resources.yaml#/RealmResources'
+/{realm}/{realm_id}/updates:
+  $ref: './realm-content.yaml#/Updates'
+/{realm}/{realm_id}/updates/{update_id}:
+  $ref: './realm-content.yaml#/UpdateItem'
+/{realm}/{realm_id}/updates/{update_id}/comments:
+  $ref: './realm-content.yaml#/UpdateComments'
+/{realm}/{realm_id}/updates/{update_id}/comments/{comment_id}:
+  $ref: './realm-content.yaml#/UpdateComment'
+/{realm}/{realm_id}/events:
+  $ref: './realm-content.yaml#/Events'
+/{realm}/{realm_id}/events/{id}:
+  $ref: './realm-content.yaml#/EventItem'
+/{realm}/{realm_id}/posts:
+  $ref: './realm-content.yaml#/Posts'
+/{realm}/{realm_id}/posts/{post_id}:
+  $ref: './realm-content.yaml#/PostItem'
+/{realm}/{realm_id}/posts/{post_id}/comments:
+  $ref: './realm-content.yaml#/PostComments'
+/{realm}/{realm_id}/posts/{post_id}/comments/{comment_id}:
+  $ref: './realm-content.yaml#/PostComment'
+/{realm}/{realm_id}/discussions:
+  $ref: './realm-content.yaml#/Discussions'
+/{realm}/{realm_id}/discussions/{post_id}:
+  $ref: './realm-content.yaml#/DiscussionItem'
+/{realm}/{realm_id}/discussions/{post_id}/comments:
+  $ref: './realm-content.yaml#/DiscussionComments'
+/{realm}/{realm_id}/discussions/{post_id}/comments/{comment_id}:
+  $ref: './realm-content.yaml#/DiscussionComment'
+/{realm}/{realm_id}/documents:
+  $ref: './realm-content.yaml#/Documents'
+/{realm}/{realm_id}/documents/{id}:
+  $ref: './realm-content.yaml#/DocumentItem'
+/{realm}/{realm_id}/albums:
+  $ref: './realm-content.yaml#/Albums'
+/{realm}/{realm_id}/albums/{album_id}:
+  $ref: './realm-content.yaml#/AlbumItem'
+/{realm}/{realm_id}/albums/{album_id}/content:
+  $ref: './realm-content.yaml#/AlbumContentCreate'
+/{realm}/{realm_id}/albums/{album_id}/content/{content_id}:
+  $ref: './realm-content.yaml#/AlbumContentItem'
+/{realm}/{realm_id}/albums/{album_id}/content/{content_id}/comments:
+  $ref: './realm-content.yaml#/AlbumComments'
+/{realm}/{realm_id}/albums/{album_id}/content/{content_id}/comments/{comment_id}:
+  $ref: './realm-content.yaml#/AlbumComment'
+/sections/{realm_id}/pages:
+  $ref: './realm-content.yaml#/Pages'
+/sections/{realm_id}/page/{id}:
+  $ref: './realm-content.yaml#/PageItem'

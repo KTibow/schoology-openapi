@@ -1,0 +1,59 @@
+name: Build & deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Sets up pnpm *and* the Node runtime, and runs `pnpm install` itself,
+      # so it replaces pnpm/action-setup + actions/setup-node + an install
+      # step. `--frozen-lockfile` is already the default whenever CI is set.
+      - uses: pnpm/setup@v2
+        with:
+          runtime: node@26
+          cache: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install pyyaml jsonschema referencing
+
+      # Build, then refuse to publish a spec that fails its own rules. Nothing
+      # here talks to Schoology: verify_live.py runs its request-body fixtures
+      # and skips the response half when probe/ is absent, which it always is
+      # on CI. Checking live responses needs a real account, so it stays local.
+      - name: Build and check the spec
+        run: |
+          python3 scripts/build.py
+          python3 scripts/lint_spec.py dist/openapi.strict.json
+          pnpm exec spectral lint dist/openapi.strict.json -f text
+          python3 scripts/verify_live.py
+
+      - name: Build the site
+        working-directory: site
+        run: pnpm build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/dist
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,6 @@
+Error:
+  type: [string, "null"]
+  description: Error message. Some error responses have an empty body.
+Empty:
+  type: [string, "null"]
+  description: Empty body (403/404 responses typically return an empty string).

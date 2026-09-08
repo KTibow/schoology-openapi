@@ -1,0 +1,38 @@
+LikeResult:
+  type: object
+  title: Like result
+  description: Response of the like POST endpoints — the two like fields shared by all likeable objects.
+  properties:
+    likes: { type: [integer, string] }
+    user_like_action: { type: boolean }
+  additionalProperties: false
+LikeUsers:
+  type: object
+  title: Likes listing
+  description: Users who liked an update/comment.
+  properties:
+    total: { type: [integer, string] }
+    users:
+      type: array
+      items: { $ref: 'user.yaml#/User' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+LikeInput:
+  type: object
+  title: Like action
+  required: [like_action]
+  properties:
+    like_action:
+      type: [string, boolean]
+      description: "`true` to like, `false` to unlike."
+      enum: ["true", "false", true, false]
+  additionalProperties: false
+PollVoteInput:
+  type: object
+  title: Poll vote
+  description: Vote/un-vote a poll option. Repeat actions return 400.
+  required: [id, select]
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId', description: Poll option id to vote for. }
+    select: { type: [string, boolean], description: "`true` to vote, `false` to un-vote." }
+  additionalProperties: false

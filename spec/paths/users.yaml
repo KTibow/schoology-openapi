@@ -1,0 +1,696 @@
+UsersCollection:
+  get:
+    tags: [Users]
+    summary: List users (admin)
+    description: |
+      List users in your school (paged). Only returns users in your building
+      unless you administer all buildings.
+
+    operationId: listUsers
+    x-student-access: forbidden
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - $ref: '../components/parameters/_index.yaml#/picture_size'
+      - name: building_id
+        in: query
+        description: Only return users for the given building.
+        schema: { type: string }
+      - name: role_ids
+        in: query
+        description: Comma-separated list of role IDs — only return users with these roles.
+        schema: { type: string }
+      - name: parent_access_codes
+        in: query
+        description: Set to `1` to include parent access codes for each returned user.
+        schema: { type: string, enum: ["1"] }
+      - name: school_uids
+        in: query
+        description: Comma-separated list of school_uids (up to 50).
+        schema: { type: string }
+    responses:
+      '200':
+        description: A paged collection of users.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/UserCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  post:
+    tags: [Users]
+    summary: Create users (single or bulk, admin)
+    description: |
+      Create a user, or up to 50 users at once by wrapping them in
+      `{"users": {"user": [...]}}`.
+      Query parameters:
+      - `update_existing=1` — update existing users matched by `school_uid`.
+      - `ignore_email_conflicts=1` — if the email exists on an account in
+        another school, create without an email (username generated from
+        school_uid if needed).
+      - `email_conflict_resolution=1` — create with a username when the email
+        exists; `=2` — merge duplicate `[email]@[verified_domain]` accounts.
+
+    operationId: createUsers
+    x-student-access: unknown
+    parameters:
+      - name: update_existing
+        in: query
+        description: Update existing users matched by `school_uid` instead of failing.
+        schema: { type: string, enum: ["1"] }
+      - name: ignore_email_conflicts
+        in: query
+        description: Create users without an email when the email conflicts across schools.
+        schema: { type: string, enum: ["1"] }
+      - name: email_conflict_resolution
+        in: query
+        description: "`1` create with a username; `2` merge `[email]@[verified_domain]` duplicates."
+        schema: { type: string, enum: ["1", "2"] }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '../components/schemas/_index.yaml#/UserCreate'
+              - $ref: '../components/schemas/_index.yaml#/UserBulkInput'
+    responses:
+      '201':
+        description: The created user, or the per-user bulk result.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '../components/schemas/_index.yaml#/User'
+                - type: object
+                  properties:
+                    user: { type: array, items: { $ref: '../components/schemas/_index.yaml#/UserBulkResult' } }
+                  additionalProperties: false
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  put:
+    tags: [Users]
+    summary: Update users (bulk, admin)
+    description: |
+      Modify multiple users (up to 50) by wrapping them in
+      `{"users": {"user": [...]}}` — each object must include `id`.
+      Returns the Schoology ID of each updated user. Single-user updates use
+      `PUT /users/{id}`.
+    operationId: updateUsersBulk
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/UserBulkInput' }
+    responses:
+      '200':
+        description: Per-user results.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user: { type: array, items: { $ref: '../components/schemas/_index.yaml#/UserBulkResult' } }
+              additionalProperties: false
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  delete:
+    tags: [Users]
+    summary: Delete users (bulk, admin)
+    description: |
+      Deactivate up to 50 users. `uids` is a comma-separated list of Schoology
+      IDs. Without `option_keep_enrollments`, the user's grade/attendance
+      history is deleted and cannot be restored. Single-user delete uses
+      `DELETE /users/{id}`.
+    operationId: deleteUsersBulk
+    x-student-access: unknown
+    parameters:
+      - name: uids
+        in: query
+        required: true
+        description: Comma-separated list of Schoology IDs.
+        schema: { type: string }
+      - name: option_comment
+        in: query
+        description: Reason for marking inactive.
+        schema: { type: string }
+      - name: option_keep_enrollments
+        in: query
+        description: Set to `1` to keep grade/attendance history.
+        schema: { type: string, enum: ["1"] }
+      - name: email_notification
+        in: query
+        description: Whether to email the deleted user (default sends email).
+        schema: { type: string, enum: ["0", "1"] }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+UsersMe:
+  get:
+    tags: [Users]
+    summary: Get the token's user
+    description: |
+      Shortcut for `GET /users/{current user id}`. **Returns a 303 redirect** to
+      the canonical URL — regenerate the OAuth header (fresh nonce/timestamp)
+      before following it.
+    operationId: getMe
+    x-student-access: ok
+    x-verified: true
+    responses:
+      '200':
+        description: The current user.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/User' }
+      '303':
+        description: Redirect to `GET /users/{id}` (follow with a re-signed request).
+        headers:
+          Location:
+            description: Canonical user URL.
+            schema: { type: string, format: uri }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+
+UsersInactiveCollection:
+  get:
+    tags: [Users]
+    summary: List inactive users (admin)
+    description: View a list of inactive users in your school.
+    operationId: listInactiveUsers
+    x-student-access: forbidden
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+    responses:
+      '200':
+        description: A paged collection of inactive users.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/UserInactiveCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+UsersInactiveItem:
+  get:
+    tags: [Users]
+    summary: Get an inactive user (admin)
+    operationId: getInactiveUser
+    description: View a specified inactive user.
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '200':
+        description: An inactive user.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/UserInactive' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+UsersExt:
+  get:
+    tags: [Users]
+    summary: Get a user by external (unique) ID
+    description: |
+      Look up a user by their `school_uid` (e.g. SIS ID). **Returns a 303
+      redirect** to `GET /users/{id}` — regenerate the OAuth header before
+      following it.
+    operationId: getUserByExtId
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/ext_id'
+    responses:
+      '200':
+        description: The user.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/User' }
+      '303':
+        description: Redirect to `GET /users/{id}`.
+        headers:
+          Location: { description: Canonical user URL., schema: { type: string, format: uri } }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+UsersLanguages:
+  get:
+    tags: [Users]
+    summary: List interface languages
+    description: All currently available interface languages.
+    operationId: listLanguages
+    x-student-access: ok
+    x-verified: true
+    responses:
+      '200':
+        description: Language list.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Languages' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+
+UsersItem:
+  get:
+    tags: [Users]
+    summary: Get a user
+    description: View a specified user.
+    operationId: getUser
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+      - $ref: '../components/parameters/_index.yaml#/picture_size'
+    responses:
+      '200':
+        description: A user.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/User' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Users]
+    summary: Update a user
+    description: |
+      Modify a user. Send only the fields to change; blank `password` leaves it
+      unchanged. Returns `204 No Content`. Admin permissions are required for
+      any user other than the token's own.
+    operationId: updateUser
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/UserWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Users]
+    summary: Delete a user (admin)
+    description: |
+      Deactivate a user (cannot be undone). Without `option_keep_enrollments`
+      the user's grade/attendance history is permanently deleted.
+    operationId: deleteUser
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+      - name: option_comment
+        in: query
+        description: Reason for marking inactive.
+        schema: { type: string }
+      - name: option_keep_enrollments
+        in: query
+        description: Set to `1` to keep grade/attendance history.
+        schema: { type: string, enum: ["1"] }
+      - name: email_notification
+        in: query
+        description: Whether to email the deleted user (default sends email).
+        schema: { type: string, enum: ["0", "1"] }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+UserSections:
+  get:
+    tags: [Users]
+    summary: List a user's sections
+    description: View the sections the user is enrolled in.
+    operationId: listUserSections
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+    responses:
+      '200':
+        description: A paged collection of sections.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/SectionCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+UserGroups:
+  get:
+    tags: [Users]
+    summary: List a user's groups
+    description: View the groups the user belongs to.
+    operationId: listUserGroups
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+    responses:
+      '200':
+        description: A paged collection of groups.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/GroupCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+UserGrades:
+  get:
+    tags: [Users]
+    summary: List a user's grades
+    description: |
+      View grades in the user's active enrollments, grouped by section.
+      Query parameters:
+      - `section_id` — limit to one section (some implementations return 403
+        without it).
+      - `grading_period_ids` — comma-delimited; `other` and `final` select the
+        "Other" bucket and final grades.
+      - `timestamp` — only grades updated since this unix timestamp.
+      - `include_all_enrollments=1` — include inactive enrollments.
+      With `timestamp` or `include_all_enrollments` the output is paginated by
+      enrollment (`links.next`).
+    operationId: listUserGrades
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+      - name: section_id
+        in: query
+        description: Limit results to this section.
+        schema: { type: string }
+      - name: grading_period_ids
+        in: query
+        description: Comma-delimited grading period ids, `other`, and/or `final`.
+        schema: { type: string }
+      - name: timestamp
+        in: query
+        description: Unix timestamp — only grades updated since then.
+        schema: { type: string }
+      - name: include_all_enrollments
+        description: Set to `1` to include grades for inactive enrollments (paginates by enrollment).
+        in: query
+        schema: { type: string, enum: ["1"] }
+    responses:
+      '200':
+        description: Grades grouped by section.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/UserGrades' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+UserNetwork:
+  get:
+    tags: [Users]
+    summary: List a user's network
+    description: |
+      View users in the given user's network (not the whole school — use
+      `GET /users` for that). `search` matches names case-insensitively; `page`
+      selects the page (30 records per page).
+    operationId: listUserNetwork
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+      - name: search
+        in: query
+        description: Match user names (case-insensitive, exact and partial).
+        schema: { type: string }
+      - name: page
+        description: The page of results to return (30 records per page).
+        in: query
+        schema: { type: integer, minimum: 0, default: 0 }
+    responses:
+      '200':
+        description: Users in the network.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/NetworkUsers' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+UserFriendRequests:
+  get:
+    tags: [Users]
+    summary: List pending friend requests
+    description: >
+      View pending connection requests for the user. `created_offset` filters
+      to requests created after the given time (any format PHP's `strtotime`
+      accepts).
+    operationId: listFriendRequests
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+      - name: created_offset
+        in: query
+        description: e.g. `2010-05-14 22:23:00`.
+        schema: { type: string }
+    responses:
+      '200':
+        description: Pending requests.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/FriendRequests' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+UserFriendRequest:
+  put:
+    tags: [Users]
+    summary: Accept or deny a friend request
+    description: "`request_action` must be `accept` or `deny`."
+    operationId: updateFriendRequest
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/RequestAction' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+UserInvites:
+  get:
+    tags: [Users]
+    summary: List pending invites
+    description: >
+      View pending invites for the user to join course sections (`sections`) or
+      groups (`groups`) — the `{realm}` path segment selects the realm type
+      (other values such as `sent`/`received` are rejected with 400).
+      `created_offset` filters by
+      creation time (any `strtotime` format).
+    operationId: listInvites
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+      - $ref: '../components/parameters/_index.yaml#/realm'
+      - name: created_offset
+        in: query
+        description: e.g. `2010-05-14 23:44:32`.
+        schema: { type: string }
+    responses:
+      '200':
+        description: Pending invites.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Invites' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+UserInvite:
+  put:
+    tags: [Users]
+    summary: Accept or deny an invite
+    description: "`invite_action` must be `accept` or `deny` (wrapped in `invite`)."
+    operationId: updateInvite
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+      - $ref: '../components/parameters/_index.yaml#/realm'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/InviteAction' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+AppUserInfo:
+  get:
+    tags: [Users]
+    summary: Validate tokens against the web session
+    description: >
+      If the user has an active Schoology web session, returns the user id for
+      the passed OAuth tokens and the web session timestamp.
+    operationId: getAppUserInfo
+    x-student-access: ok
+    x-verified: true
+    responses:
+      '200':
+        description: Session info.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/AppUserInfo' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+
+CsvExportUsers:
+  get:
+    tags: [Users]
+    summary: Bulk user export (CSV, admin)
+    description: >
+      School-wide admins only. `fields` selects a comma-separated subset of
+      columns; omit for all fields. Response is `text/csv`.
+    operationId: csvExportUsers
+    x-student-access: forbidden
+    parameters:
+      - name: fields
+        in: query
+        description: >
+          Comma-separated columns: uid, school_uid, building_nid, name_title,
+          name_first, name_first_preferred, name_middle, name_last, role_name,
+          name, mail, position, grad_year, birthday, gender, bio,
+          subjects_taught, grades_taught, phone, address, website, interests,
+          activities.
+        schema: { type: string }
+    responses:
+      '200':
+        description: CSV export.
+        content:
+          text/csv:
+            schema: { type: string }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+ImportParents:
+  post:
+    tags: [Users]
+    summary: Import parent associations (admin)
+    description: >
+      Create/delete parent–child associations by `school_uid`, wrapped in
+      `{"associations": {"association": [...]}}`. Returns each student's and
+      parent's school_uid/uid, or errors.
+    operationId: importParentAssociations
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [associations]
+            properties:
+              associations:
+                type: object
+                properties:
+                  association: { type: array, items: { $ref: '../components/schemas/_index.yaml#/AssociationInput' } }
+                additionalProperties: false
+            additionalProperties: false
+    responses:
+      '200':
+        description: Association results.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                association: { type: array, items: { $ref: '../components/schemas/_index.yaml#/AssociationResult' } }
+              additionalProperties: false
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+ImportAdvisors:
+  post:
+    tags: [Users]
+    summary: Import advisor associations (admin)
+    description: Same as the parents import, but using `advisor_school_uid`.
+    operationId: importAdvisorAssociations
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [associations]
+            properties:
+              associations:
+                type: object
+                properties:
+                  association: { type: array, items: { $ref: '../components/schemas/_index.yaml#/AssociationInput' } }
+                additionalProperties: false
+            additionalProperties: false
+    responses:
+      '200':
+        description: Association results.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                association: { type: array, items: { $ref: '../components/schemas/_index.yaml#/AssociationResult' } }
+              additionalProperties: false
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+UsersReactivate:
+  put:
+    tags: [Users]
+    summary: Reactivate inactive users (bulk, admin)
+    description: >
+      Re-activate inactive users wrapped in `{"user": [...]}`. Set
+      `option_reenroll: 1` per user to place them back into their courses and
+      groups. Returns a location link per user.
+    operationId: reactivateUsers
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/UserReactivateInput' }
+    responses:
+      '200':
+        description: Per-user reactivation results.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user: { type: array, items: { $ref: '../components/schemas/_index.yaml#/UserBulkResult' } }
+              additionalProperties: false
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }

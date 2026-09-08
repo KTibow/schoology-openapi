@@ -1,0 +1,362 @@
+RolesCollection:
+  get:
+    tags: [Roles]
+    summary: List roles
+    description: >
+      View roles in your school. When school override roles exist, they are
+      returned in `building_role`.
+    operationId: listRoles
+    x-student-access: ok
+    x-verified: true
+    responses:
+      '200':
+        description: Role list.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Roles' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+
+RoleItem:
+  get:
+    tags: [Roles]
+    summary: Get a role
+    operationId: getRole
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '200':
+        description: A role.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Role' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+Search:
+  get:
+    tags: [Search]
+    summary: Search users, groups and courses
+    description: >
+      Search across the school (case-insensitive). `keywords` is the search
+      phrase; `type` limits results to one kind. Results come back keyed by
+      kind — `users`, `groups`, `courses` — each a paged collection with its
+      own result shape.
+    operationId: search
+    x-student-access: forbidden
+    parameters:
+      - name: keywords
+        in: query
+        description: The search phrase.
+        required: true
+        schema: { type: string }
+      - name: type
+        description: Limit results to one kind. Omit to search all three.
+        in: query
+        schema: { type: string, enum: [user, group, course] }
+    responses:
+      '200':
+        description: Search results keyed by type.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/SearchResults' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+LikeUpdate:
+  get:
+    tags: [Likes & polls]
+    summary: List users who liked an update
+    operationId: listUpdateLikes
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+    responses:
+      '200':
+        description: Users who liked the update.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/LikeUsers' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  post:
+    tags: [Likes & polls]
+    summary: Like/unlike an update
+    description: '`like_action: "true"` likes, `"false"` unlikes. Returns the two like fields.'
+    operationId: likeUpdate
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/LikeInput' }
+    responses:
+      '201':
+        description: The like state.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/LikeResult' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+LikeComment:
+  get:
+    tags: [Likes & polls]
+    summary: List users who liked a comment
+    operationId: listCommentLikes
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/id'
+      - $ref: '../components/parameters/_index.yaml#/comment_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+    responses:
+      '200':
+        description: Users who liked the comment.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/LikeUsers' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  post:
+    tags: [Likes & polls]
+    summary: Like/unlike a comment
+    description: "`like_action: \"true\"` likes, `\"false\"` unlikes. Returns the two like fields."
+    operationId: likeComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/id'
+      - $ref: '../components/parameters/_index.yaml#/comment_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/LikeInput' }
+    responses:
+      '201':
+        description: The like state.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/LikeResult' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+PollVote:
+  post:
+    tags: [Likes & polls]
+    summary: Vote in a poll
+    description: >
+      Vote/un-vote a poll option (`id` = option id, `select` = vote/un-vote).
+      Repeating an already-taken action returns 400. Returns the full update
+      with attachments (and poll counts).
+    operationId: votePoll
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/PollVoteInput' }
+    responses:
+      '200':
+        description: The update with its poll state.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Update' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+Multiget:
+  post:
+    tags: [Utility]
+    summary: Batch multiple GETs
+    description: >
+      Execute up to 50 GET calls in one POST and receive each response body in
+      full. Allowed paths: `/groups/{id}`, `/courses/{id}`,
+      `/courses/{id}/sections`, `/sections/{id}`, `/sections/{id}/assignments`,
+      `/sections/{id}/enrollments`, `/sections/{id}/grade_items`,
+      `/sections/{id}/grades`, `/sections/ext/{id}`, `/users/{id}`,
+      `/users/{id}/sections`, `/users/{id}/groups`, `/users/ext/{id}`,
+      `/{realm}/{realm_id}/updates`, `/{realm}/{realm_id}/discussions`,
+      `/{realm}/{realm_id}/events`.
+    operationId: multiget
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/MultigetRequest' }
+    responses:
+      '200':
+        description: Compiled sub-responses.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/MultigetResponse' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+Multioptions:
+  post:
+    tags: [Utility]
+    summary: Batch multiple OPTIONS calls
+    description: Execute multiple OPTIONS calls (any endpoint) in one POST.
+    operationId: multioptions
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/MultigetRequest' }
+    responses:
+      '200':
+        description: Compiled sub-responses.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/MultigetResponse' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+TriggerTargets:
+  get:
+    tags: [Event triggers]
+    summary: List trigger targets
+    description: >
+      List the school's targets. Requires access to the Schoology Trigger UI.
+    operationId: listTriggerTargets
+    x-student-access: forbidden
+    responses:
+      '200':
+        description: The school's targets.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/TargetCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  post:
+    tags: [Event triggers]
+    summary: Create a trigger target
+    operationId: createTriggerTarget
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/TargetWritable' }
+    responses:
+      '201':
+        description: The created target.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Target' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+TriggerTargetItem:
+  parameters:
+    - name: target_id
+      in: path
+      required: true
+      description: Schoology ID of the target.
+      schema: { $ref: '../components/schemas/_index.yaml#/SchoologyId' }
+  put:
+    tags: [Event triggers]
+    summary: Update a trigger target
+    operationId: updateTriggerTarget
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/TargetWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Event triggers]
+    summary: Delete a trigger target
+    operationId: deleteTriggerTarget
+    x-student-access: unknown
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+TriggerSubscriptions:
+  get:
+    tags: [Event triggers]
+    summary: List trigger subscriptions
+    description: >
+      List every subscription for the caller's school. `subscribed` is always `0`
+      in this response — it is a write-only flag on the PUT.
+    operationId: listTriggerSubscriptions
+    x-student-access: forbidden
+    responses:
+      '200':
+        description: The school's subscriptions.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/SubscriptionCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  put:
+    tags: [Event triggers]
+    summary: Create or modify trigger subscriptions
+    description: >
+      Subscribe or unsubscribe targets in bulk. Each item is reported
+      independently, so a batch can partially succeed — check the per-item
+      `status` rather than the HTTP status.
+    operationId: updateTriggerSubscriptions
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/SubscriptionInput' }
+    responses:
+      '200':
+        description: Per-item results of the subscription changes.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/SubscriptionResults' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+RecentFeed:
+  get:
+    tags: [Updates]
+    summary: List the signed-in user's activity feed
+    description: >
+      The aggregated "recent activity" feed — the updates the signed-in user
+      would see on their home page, drawn from every realm they belong to.
+      Not part of Schoology's published documentation, so it carries no
+      compatibility promise; it answers with the same wrapper as the per-realm
+      update collections.
+    operationId: listRecentFeed
+    x-student-access: ok
+    responses:
+      '200':
+        description: A paged collection of updates from every realm the user belongs to.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/UpdateCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }

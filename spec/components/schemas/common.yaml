@@ -1,0 +1,228 @@
+SchoologyId:
+  type: [integer, string]
+  title: Schoology ID
+  description: >
+    An internal Schoology object ID. Depending on the endpoint the same ID
+    arrives as a JSON integer or as a numeric string, so both are accepted;
+    clients should coerce to one representation before comparing.
+NullableSchoologyId:
+  type: [integer, string, "null"]
+  title: Schoology ID (nullable)
+  description: >
+    Like `SchoologyId`, but the field is omitted-as-null when the object has no
+    such relation (e.g. an unset grading category).
+Timestamp:
+  type: [integer, string]
+  title: Unix timestamp
+  description: >
+    Seconds since the Unix epoch. Arrives as a JSON integer or a numeric string
+    depending on the endpoint.
+BinaryFlag:
+  type: [integer, string]
+  title: Boolean-as-integer
+  description: >
+    Schoology models most booleans as `0`/`1`. Depending on endpoint they may
+    arrive as JSON integers or numeric strings — both are accepted here.
+  enum: [0, 1, "0", "1"]
+Links:
+  type: object
+  description: HAL-style link relations. `self` points at the resource's canonical API URL.
+  properties:
+    self: { type: string, format: uri }
+    next: { type: string, format: uri, description: Next page (paginated collections). }
+  additionalProperties: false
+Total:
+  type: [integer, string]
+  description: Total number of records in the collection (integer or numeric string).
+CollectionLinks:
+  type: object
+  properties:
+    self: { type: string, format: uri, description: URL of this page including paging parameters. }
+    next: { type: string, format: uri, description: 'URL of the next page, when more records exist.' }
+  additionalProperties: false
+BulkResult:
+  type: object
+  description: >
+    Per-object result of a bulk operation. Most collection POST/PUT/DELETE
+    endpoints take up to 50 objects at once, wrapped under a plural-then-
+    singular key (`{"users": {"user": [...]}}`), and answer with one of these
+    rows per object — so a batch can partially succeed and the HTTP status
+    alone does not tell you it worked. Check each row's `response_code`.
+  properties:
+    response_code: { type: [integer, string], description: HTTP-style status of this item's operation. }
+    location: { type: string, format: uri, description: API URL of the created/updated object. }
+    id: { $ref: '#/SchoologyId', description: Schoology ID of the object. }
+    school_uid: { type: string, description: Echoed identifier for user/enrollment bulk results. }
+    message: { type: string, description: Human-readable result message (e.g. on reactivation). }
+    error: { type: string, description: Error message when the item failed. }
+  additionalProperties: false
+Error:
+  type: [string, 'null']
+  description: 'Error message. Some error responses have an empty body.'
+Empty:
+  type: [string, "null"]
+  description: Empty body (403/404 responses typically return an empty string).
+Attachment:
+  type: object
+  description: >
+    The `attachments` object embedded in content when requested with
+    `with_attachments=1` (and always present on documents). Each present key
+    holds that attachment type's list.
+  properties:
+    files:
+      type: object
+      properties:
+        file:
+          type: array
+          items: { $ref: '#/FileObject' }
+      additionalProperties: false
+    links:
+      type: object
+      properties:
+        link:
+          type: array
+          items: { $ref: '#/LinkObject' }
+      additionalProperties: false
+    videos:
+      type: object
+      properties:
+        video:
+          type: array
+          items: { $ref: '#/VideoObject' }
+      additionalProperties: false
+    embeds:
+      type: object
+      properties:
+        embed:
+          type: array
+          items: { $ref: '#/EmbedObject' }
+      additionalProperties: false
+  additionalProperties: false
+FileObject:
+  type: object
+  description: A file attachment. Converted-file fields describe the media conversion Schoology performed.
+  properties:
+    id: { $ref: '#/SchoologyId', description: Attachment ID. }
+    fid: { $ref: '#/NullableSchoologyId', description: Underlying file ID (often null on read). }
+    type: { type: [string, "null"], description: Attachment type (`file`). }
+    title: { type: string, description: Title of the attachment; may differ from the filename. }
+    filename: { type: string }
+    filesize: { type: [integer, string] }
+    md5_checksum: { type: string }
+    timestamp: { $ref: '#/Timestamp', description: Unix timestamp of the upload. }
+    filemime: { type: [string, "null"], description: 'MIME type, e.g. `application/pdf`.' }
+    download_path: { type: string, format: uri, description: API URL to download the file (authenticated). }
+    extension: { type: [string, "null"] }
+    dimensions: { type: [string, "null"], description: 'Image dimensions as `WxH`, when applicable.' }
+    thumbnail: { type: [string, "null"], format: uri }
+    thumbnail_dimensions: { type: [string, "null"] }
+    converted_status:
+      type: [integer, string]
+      description: >
+        Conversion status: `1` converted & available, `2` pending, `3` failed,
+        `4` conversion inactive.
+      enum: [1, 2, 3, 4, "1", "2", "3", "4"]
+    converted_type:
+      type: [integer, string]
+      description: >
+        What Schoology considers this file type: `1` video, `2` audio, `3` image,
+        `4` document, `5` unknown.
+      enum: [1, 2, 3, 4, 5, "1", "2", "3", "4", "5"]
+    converted_filename: { type: [string, "null"] }
+    converted_download_path: { type: [string, "null"], format: uri }
+    converted_extension: { type: [string, "null"] }
+    converted_filesize: { type: [integer, string, "null"] }
+    converted_md5_checksum: { type: [string, "null"] }
+    converted_filemime: { type: [string, "null"], description: Undocumented; mime type of the converted file. }
+  additionalProperties: false
+LinkObject:
+  type: object
+  properties:
+    id: { $ref: '#/SchoologyId' }
+    type: { type: [string, "null"], description: Attachment type (`link`). }
+    title: { type: [string, "null"] }
+    url: { type: string, format: uri }
+    summary: { type: [string, "null"], description: 'Teaser text from the linked site, if requested.' }
+    favicon: { type: [string, "null"], format: uri }
+    thumbnail: { type: [string, "null"], format: uri, description: Screenshot thumbnail of the linked page. }
+    display_inline: { $ref: '#/BinaryFlag', description: Whether the link opens in an iframe (1) or a new tab (0). }
+  additionalProperties: false
+VideoObject:
+  type: object
+  description: Like a link, but for sites Schoology handles specially (YouTube, Vimeo…).
+  properties:
+    id: { $ref: '#/SchoologyId' }
+    type: { type: [string, "null"], description: Attachment type (`video`). }
+    title: { type: [string, "null"] }
+    url: { type: string, format: uri }
+    favicon: { type: [string, "null"], format: uri }
+    thumbnail: { type: [string, "null"], format: uri }
+  additionalProperties: false
+EmbedObject:
+  type: object
+  properties:
+    id: { $ref: '#/SchoologyId' }
+    embed_code: { type: string, description: The HTML embed code. }
+  additionalProperties: false
+Tag:
+  type: object
+  description: >
+    A learning standard / custom learning outcome alignment, returned inside the
+    `tags` object when `with_tags=1` is requested.
+  properties:
+    title: { type: [string, "null"] }
+    description: { type: [string, "null"] }
+    id: { $ref: '#/SchoologyId', description: Internal term ID. }
+    vid: { $ref: '#/SchoologyId', description: Internal vocabulary ID. }
+  additionalProperties: false
+Tags:
+  type: object
+  properties:
+    tag:
+      type: array
+      items: { $ref: '#/Tag' }
+  additionalProperties: false
+UploadRequest:
+  type: object
+  required: [filename, filesize]
+  properties:
+    filename: { type: string }
+    filesize: { type: integer, description: Size of the file in bytes. }
+    md5_checksum: { type: string, description: MD5 checksum; verified again when the bytes are PUT. }
+  additionalProperties: false
+UploadTarget:
+  type: object
+  description: Response to `POST /upload` — PUT the raw bytes to `upload_location` next.
+  properties:
+    id: { $ref: '#/SchoologyId', description: ID of the prepared (empty) file. }
+    filename: { type: string }
+    filesize: { type: [integer, string] }
+    md5_checksum: { type: string }
+    upload_location: { type: string, format: uri, description: One-time PUT endpoint for the file contents. }
+    upload_token: { type: string }
+  additionalProperties: false
+MultigetRequest:
+  type: object
+  description: >
+    Body of `POST /multiget` (and `/multioptions`) — a list of API paths to
+    execute server-side. Paths must come from the multiget-allowed list.
+  properties:
+    request:
+      type: array
+      items: { type: string }
+  additionalProperties: false
+MultigetResponse:
+  type: object
+  description: >
+    Compiled responses of a multiget; each `response` entry contains the status
+    and full body of the corresponding request.
+  properties:
+    response:
+      type: array
+      items:
+        type: object
+        properties:
+          response_code: { type: integer }
+          body: { description: Full response body of the sub-request. }
+        additionalProperties: false
+  additionalProperties: false

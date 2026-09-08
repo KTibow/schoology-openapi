@@ -1,0 +1,576 @@
+GradingPeriodsCollection:
+  get:
+    tags: [Grading]
+    summary: List grading periods (admin)
+    description: >
+      View all grading periods for the school. Filters: `title`,
+      `startswith=1` (match titles beginning with `title`).
+
+    operationId: listGradingPeriods
+    x-student-access: forbidden
+    parameters:
+      - name: title
+        in: query
+        description: Filter by title.
+        schema: { type: string }
+      - name: startswith
+        description: Set to `1` to match titles that begin with `title`.
+        in: query
+        schema: { type: string, enum: ["1"] }
+    responses:
+      '200':
+        description: A collection of grading periods.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/GradingPeriodCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  post:
+    tags: [Grading]
+    summary: Create a grading period (admin)
+    operationId: createGradingPeriod
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/GradingPeriodCreate' }
+    responses:
+      '201':
+        description: The created grading period.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/GradingPeriod' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+GradingPeriodItem:
+  get:
+    tags: [Grading]
+    summary: Get a grading period (admin)
+    x-verified: true
+    operationId: getGradingPeriod
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/grading_period_id'
+    responses:
+      '200':
+        description: A grading period.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/GradingPeriod' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Grading]
+    summary: Update a grading period (admin)
+    description: Modify a grading period. Returns 204 No Content.
+    operationId: updateGradingPeriod
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/grading_period_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/GradingPeriodWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Grading]
+    summary: Delete a grading period (admin)
+    description: >
+      Delete a grading period (cannot be undone). All course sections belonging
+      to it must first be deleted or reassigned.
+    operationId: deleteGradingPeriod
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/grading_period_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+SectionGradingPeriods:
+  get:
+    tags: [Grading]
+    summary: List a section's grading periods
+    description: >
+      The grading periods the section spans, with weights.
+
+    operationId: listSectionGradingPeriods
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+    responses:
+      '200':
+        description: The section's grading periods.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/SectionGradingPeriodCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+SectionGradingCategories:
+  get:
+    tags: [Grading]
+    summary: List a section's grading categories
+    description: >
+      Grading categories required for grading; assignments without one are
+      ungraded.
+    operationId: listSectionGradingCategories
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+    responses:
+      '200':
+        description: The section's grading categories.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/GradingCategoryCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  post:
+    tags: [Grading]
+    summary: Create grading categories (single or bulk)
+    description: >
+      Create one or more categories wrapped in
+      `{"grading_categories": {"grading_category": [...]}}`.
+    operationId: createSectionGradingCategories
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '../components/schemas/_index.yaml#/GradingCategoryWritable'
+              - $ref: '../components/schemas/_index.yaml#/GradingCategoriesBulkInput'
+    responses:
+      '200':
+        description: Created categories.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/GradingCategoryCollection' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  put:
+    tags: [Grading]
+    summary: Update grading categories (bulk)
+    description: Update one or more categories (each identified by `id`).
+    operationId: updateSectionGradingCategoriesBulk
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/GradingCategoriesBulkInput' }
+    responses:
+      '200':
+        description: Updated categories.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/GradingCategoryCollection' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+SectionGradingCategory:
+  get:
+    tags: [Grading]
+    summary: Get a grading category
+    operationId: getSectionGradingCategory
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '200':
+        description: A grading category.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/GradingCategory' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Grading]
+    summary: Update a grading category
+    operationId: updateSectionGradingCategory
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/GradingCategoryWritable' }
+    responses:
+      '200':
+        description: The updated category.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/GradingCategory' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+  delete:
+    tags: [Grading]
+    summary: Delete a grading category
+    description: Delete a grading category from the section's gradebook setup.
+    operationId: deleteSectionGradingCategory
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+SectionGradingScales:
+  get:
+    tags: [Grading]
+    summary: List a section's grading scales
+    description: Grading scales usable in the section.
+    operationId: listSectionGradingScales
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+    responses:
+      '200':
+        description: The section's grading scales.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/GradingScaleCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+SectionGradingRubrics:
+  get:
+    tags: [Grading]
+    summary: List a section's grading rubrics
+    description: List all rubrics in the section.
+    operationId: listSectionGradingRubrics
+    x-student-access: forbidden
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+    responses:
+      '200':
+        description: The section's rubrics.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/GradingRubricCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+SectionGradingRubric:
+  get:
+    tags: [Grading]
+    summary: Get a grading rubric
+    operationId: getSectionGradingRubric
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '200':
+        description: A grading rubric.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/GradingRubric' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+SectionGradingGroups:
+  get:
+    tags: [Grading]
+    summary: List a section's grading groups
+    description: >
+      Named subsets of a section's students, identified by enrollment id.
+      Assignments and pages can be assigned to a grading group instead of to
+      the whole section (`grading_group_ids`).
+    operationId: listSectionGradingGroups
+    x-student-access: forbidden
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+    responses:
+      '200':
+        description: The section's grading groups.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/GradingGroupCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  post:
+    tags: [Grading]
+    summary: Create grading groups (bulk)
+    description: >
+      Create one or more grading groups wrapped in
+      `{"grading_groups": {"grading_group": [...]}}`.
+    operationId: createSectionGradingGroups
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/GradingGroupsBulkInput' }
+    responses:
+      '200':
+        description: Created grading groups.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                grading_group: { type: array, items: { $ref: '../components/schemas/_index.yaml#/GradingGroup' } }
+              additionalProperties: false
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+SectionGradingGroup:
+  get:
+    tags: [Grading]
+    summary: Get a grading group
+    operationId: getSectionGradingGroup
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '200':
+        description: A grading group.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/GradingGroup' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Grading]
+    summary: Update a grading group
+    operationId: updateSectionGradingGroup
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/GradingGroupWritable' }
+    responses:
+      '200':
+        description: The updated grading group.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/GradingGroup' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Grading]
+    summary: Delete a grading group
+    description: Delete a grading group (cannot be undone).
+    operationId: deleteSectionGradingGroup
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+SectionGrades:
+  get:
+    tags: [Grading]
+    summary: List a section's grades (teacher)
+    description: >
+      View grades for the section (paged). Filters: `assignment_id`,
+      `enrollment_id`, `timestamp`. Without filters, returns all grades for all
+      assignments and students. Also includes per-period and final grades.
+
+    operationId: listSectionGrades
+    x-student-access: forbidden
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - name: assignment_id
+        in: query
+        description: Filter by assignment id.
+        schema: { type: string }
+      - name: enrollment_id
+        in: query
+        description: Filter by enrollment id.
+        schema: { type: string }
+      - name: timestamp
+        in: query
+        description: Unix timestamp — only grades updated since then.
+        schema: { type: string }
+    responses:
+      '200':
+        description: Grades, periods and final grades.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/SectionGrades' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Grading]
+    summary: Set grades
+    description: >
+      Set/modify grades — one body shape writes grades
+      (`{"grades": {"grade": [...]}}`), another writes period/final comments
+      (`{"final_comments": {"final_comment": [...]}}`).
+    operationId: updateSectionGrades
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '../components/schemas/_index.yaml#/GradesInput'
+              - $ref: '../components/schemas/_index.yaml#/FinalCommentsInput'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+SectionAttendance:
+  get:
+    tags: [Grading]
+    summary: List a section's attendance (teacher)
+    description: >
+      View attendance statuses (paged). Filters: `start`/`end` (YYYY-MM-DD,
+      inclusive), `enrollment_id`. Records for *present* are generally omitted.
+      Returns 410 Gone when the district uses the PowerSchool SIS Attendance
+      App.
+    operationId: listSectionAttendance
+    x-student-access: forbidden
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - name: start
+        in: query
+        description: Range start (YYYY-MM-DD).
+        schema: { type: string }
+      - name: end
+        in: query
+        description: Range end (YYYY-MM-DD).
+        schema: { type: string }
+      - name: enrollment_id
+        description: Filter by enrollment id.
+        in: query
+        schema: { type: string }
+    responses:
+      '200':
+        description: Attendance records grouped by date, plus totals.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Attendance' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '410': { $ref: '../components/responses/_index.yaml#/Gone' }
+  put:
+    tags: [Grading]
+    summary: Set attendance
+    description: >
+      Modify attendance statuses wrapped in
+      `{"attendances": {"attendance": [...]}}`. Returns per-entry ids and
+      response codes. Returns 410 Gone with the PowerSchool SIS Attendance App.
+    operationId: updateSectionAttendance
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/AttendanceInput' }
+    responses:
+      '200':
+        description: Attendance ids and response codes.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/AttendanceBulkResult' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '410': { $ref: '../components/responses/_index.yaml#/Gone' }
+
+SectionCompletion:
+  get:
+    tags: [Grading]
+    summary: List a section's completion records (teacher)
+    description: View completion objects for all enrolled users.
+    operationId: listSectionCompletion
+    x-student-access: forbidden
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+    responses:
+      '200':
+        description: Completion records.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/CompletionCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+SectionCompletionUser:
+  get:
+    tags: [Grading]
+    summary: Get a user's completion record
+    description: >
+      View the completion object for a particular user in the section. A student
+      can read their own record.
+    operationId: getSectionCompletionUser
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '200':
+        description: A completion record.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Completion' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }

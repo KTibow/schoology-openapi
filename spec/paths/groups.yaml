@@ -1,0 +1,113 @@
+GroupsCollection:
+  get:
+    tags: [Groups]
+    summary: List groups
+    description: >
+      View a paged list of groups in your school; `building_id` filters by
+      building.
+    operationId: listGroups
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - name: building_id
+        description: Only return records for the given building.
+        in: query
+        schema: { type: string }
+    responses:
+      '200':
+        description: A paged collection of groups.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/GroupCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  post:
+    tags: [Groups]
+    summary: Create a group
+    description: Create a group.
+    operationId: createGroup
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/GroupCreate' }
+    responses:
+      '201':
+        description: The created group.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Group' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+GroupItem:
+  get:
+    tags: [Groups]
+    summary: Get a group
+    description: View a specified group.
+    operationId: getGroup
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/group_id'
+      - $ref: '../components/parameters/_index.yaml#/picture_size'
+    responses:
+      '200':
+        description: A group.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Group' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Groups]
+    summary: Update a group
+    description: Modify a group. Returns 204 No Content.
+    operationId: updateGroup
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/group_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/GroupWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Groups]
+    summary: Delete a group
+    description: Delete a group (cannot be undone).
+    operationId: deleteGroup
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/group_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+GroupCategories:
+  get:
+    tags: [Groups]
+    summary: List group categories
+    description: Categories assignable to groups (`category` field).
+    x-verified: true
+    operationId: listGroupCategories
+    x-student-access: ok
+    responses:
+      '200':
+        description: Category list.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/GroupCategories' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }

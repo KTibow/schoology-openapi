@@ -1,0 +1,47 @@
+Empty204:
+  description: >
+    Success with no content. PUT/DELETE (and some POST) operations return
+    `204 No Content` with an empty body.
+  content:
+    application/json:
+      schema: { type: "null" }
+BadRequest:
+  description: >
+    Bad request (malformed body, invalid parameters, or an unknown path segment).
+    The body may be empty or a JSON string with an error message.
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/error.yaml#/Error'
+Unauthorized:
+  description: >
+    Unauthorized. Returned with an error message string for OAuth problems
+    (e.g. `Duplicate timestamp/nonce combination, possible replay attack.
+    Request rejected.`) or with an empty body when personal API keys attempt to
+    access data of users other than the key owner (post-June 2025 restriction).
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/error.yaml#/Error'
+Forbidden:
+  description: >
+    Forbidden — the token's user lacks permission (e.g. a student reading an
+    admin-only collection). The body is empty.
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/error.yaml#/Empty'
+NotFound:
+  description: Not found — no such object, or it is not visible to the token's user.
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/error.yaml#/Empty'
+Gone:
+  description: >
+    Gone — returned by attendance endpoints when the district has installed the
+    PowerSchool SIS Attendance App for its courses.
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/error.yaml#/Empty'

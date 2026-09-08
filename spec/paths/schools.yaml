@@ -1,0 +1,131 @@
+SchoolsCollection:
+  get:
+    tags: [Schools]
+    summary: List schools
+    description: List schools in the district.
+    operationId: listSchools
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+    responses:
+      '200':
+        description: A paged collection of schools.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/SchoolCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  post:
+    tags: [Schools]
+    summary: Create a school (admin)
+    operationId: createSchool
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/SchoolCreate' }
+    responses:
+      '201':
+        description: The created school.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/School' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+SchoolItem:
+  get:
+    tags: [Schools]
+    summary: Get a school
+    description: View a specified school.
+    operationId: getSchool
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/school_id'
+    responses:
+      '200':
+        description: A school.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/School' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Schools]
+    summary: Update a school (admin)
+    description: Edit a specified school. Returns 204 No Content.
+    operationId: updateSchool
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/school_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/SchoolWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Schools]
+    summary: Delete a school (admin)
+    description: Delete a specified school.
+    operationId: deleteSchool
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/school_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+SchoolBuildings:
+  get:
+    tags: [Schools]
+    summary: List a school's buildings (admin)
+    description: >
+      View the buildings (campuses) for a school. Buildings share the school
+      shape plus `building_code`.
+    operationId: listSchoolBuildings
+    x-student-access: forbidden
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/school_id'
+    responses:
+      '200':
+        description: A collection of buildings.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/BuildingCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  post:
+    tags: [Schools]
+    summary: Create a building (admin)
+    operationId: createBuilding
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/school_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/SchoolCreate' }
+    responses:
+      '201':
+        description: The created building.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/School' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }

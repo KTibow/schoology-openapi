@@ -1,0 +1,43 @@
+{
+  "name": "schoology-openapi",
+  "version": "1.0.0",
+  "description": "An OpenAPI 3.1 description of the Schoology REST API.",
+  "scripts": {
+    "build": "python3 scripts/build.py",
+    "lint": "python3 scripts/build.py && python3 scripts/lint_spec.py dist/openapi.strict.json && pnpm exec spectral lint dist/openapi.strict.json",
+    "verify": "python3 scripts/verify_live.py",
+    "site:build": "pnpm run build && pnpm --dir site build"
+  },
+  "keywords": [
+    "schoology",
+    "openapi",
+    "powerschool",
+    "api",
+    "rest"
+  ],
+  "author": "Kendell R (KTibow)",
+  "license": "MIT",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.1.1",
+      "onFail": "download"
+    }
+  },
+  "type": "module",
+  "devDependencies": {
+    "@redocly/cli": "^2.51.2",
+    "@stoplight/spectral-cli": "^6.16.3",
+    "esbuild": "^0.28.2",
+    "yaml": "^2.9.0"
+  },
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "@scarf/scarf"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KTibow/schoology-openapi.git"
+  }
+}

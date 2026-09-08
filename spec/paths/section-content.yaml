@@ -1,0 +1,348 @@
+Assignments:
+  get:
+    tags: [Assignments]
+    summary: List assignments in a section
+    description: >
+      View a paged list of assignments, ordered by type (non-final then final)
+      then due date. Supports `with_attachments`, `with_tags`, and
+      `with_dropbox_stats` (teachers). Note that `limit` is applied per
+      assignment type, not to the result set as a whole, so a request can come
+      back with more rows than the limit.
+    operationId: listAssignments
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+      - $ref: '../components/parameters/_index.yaml#/with_tags'
+      - $ref: '../components/parameters/_index.yaml#/with_dropbox_stats'
+    responses:
+      '200':
+        description: A paged collection of assignments.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/AssignmentCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  post:
+    tags: [Assignments]
+    summary: Create an assignment
+    operationId: createAssignment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../components/schemas/_index.yaml#/AssignmentCreate'
+              - $ref: '../components/schemas/_index.yaml#/AttachmentsInput'
+    responses:
+      '201':
+        description: The created assignment.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Assignment' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+AssignmentItem:
+  get:
+    tags: [Assignments]
+    summary: Get an assignment
+    operationId: getAssignment
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/assignment_id'
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+      - $ref: '../components/parameters/_index.yaml#/with_tags'
+    responses:
+      '200':
+        description: An assignment.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Assignment' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Assignments]
+    summary: Update an assignment
+    description: >
+      Modify an assignment. Attachment rules on PUT: an existing attachment
+      must be sent back with its `id` to survive — omit the `id` and that
+      attachment is deleted. Only an attachment's `title` can be updated.
+    operationId: updateAssignment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/assignment_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../components/schemas/_index.yaml#/AssignmentWritable'
+              - $ref: '../components/schemas/_index.yaml#/AttachmentsInput'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Assignments]
+    summary: Delete an assignment
+    description: Delete an assignment (cannot be undone).
+    operationId: deleteAssignment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/assignment_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+AssignmentComments:
+  get:
+    tags: [Assignments]
+    summary: List assignment comments
+    operationId: listAssignmentComments
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/assignment_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+    responses:
+      '200':
+        description: A paged collection of comments.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/CommentCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  post:
+    tags: [Assignments]
+    summary: Comment on an assignment
+    description: Only the signed-in user can comment (no author field needed).
+    operationId: createAssignmentComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/assignment_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/CommentWritable' }
+    responses:
+      '201':
+        description: The created comment.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Comment' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+AssignmentComment:
+  get:
+    tags: [Assignments]
+    summary: Get an assignment comment
+    operationId: getAssignmentComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/assignment_id'
+      - $ref: '../components/parameters/_index.yaml#/comment_id'
+    responses:
+      '200':
+        description: A comment.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Comment' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Assignments]
+    summary: Delete an assignment comment
+    description: Delete a comment (cannot be undone).
+    operationId: deleteAssignmentComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/assignment_id'
+      - $ref: '../components/parameters/_index.yaml#/comment_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+GradeItems:
+  get:
+    tags: [Assignments]
+    summary: List grade items in a section
+    description: >
+      List any content that can be graded (assignments, discussions, …) using
+      the same shape as assignments; `type` distinguishes them. Supports
+      `with_attachments` and `with_tags`.
+    operationId: listGradeItems
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+      - $ref: '../components/parameters/_index.yaml#/with_tags'
+    responses:
+      '200':
+        description: A paged collection of grade items (assignment objects).
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/AssignmentCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+GradeItem:
+  get:
+    tags: [Assignments]
+    summary: Get a grade item
+    operationId: getGradeItem
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/assignment_id'
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+      - $ref: '../components/parameters/_index.yaml#/with_tags'
+    responses:
+      '200':
+        description: A grade item (assignment object).
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Assignment' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+ScormPackages:
+  get:
+    tags: [Packages]
+    summary: List SCORM packages in a section
+    description: View a paged list of SCORM packages in the section.
+    operationId: listScormPackages
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+    responses:
+      '200':
+        description: A paged collection of SCORM packages.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/ScormPackageCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+ScormPackage:
+  get:
+    tags: [Packages]
+    summary: Get a SCORM package
+    operationId: getScormPackage
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '200':
+        description: A SCORM package.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/ScormPackage' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Packages]
+    summary: Delete a SCORM package
+    description: Delete a SCORM package (cannot be undone).
+    operationId: deleteScormPackage
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+WebPackages:
+  get:
+    tags: [Packages]
+    summary: List web content packages in a section
+    description: View a paged list of web content packages in the section.
+    operationId: listWebPackages
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+    responses:
+      '200':
+        description: A paged collection of web content packages.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/WebContentPackageCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+WebPackage:
+  get:
+    tags: [Packages]
+    summary: Get a web content package
+    operationId: getWebPackage
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '200':
+        description: A web content package.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/WebContentPackage' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Packages]
+    summary: Delete a web content package
+    description: Delete a web content package (cannot be undone).
+    operationId: deleteWebPackage
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }

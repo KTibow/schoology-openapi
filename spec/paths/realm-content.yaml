@@ -1,0 +1,1322 @@
+# Shared realm-generic material endpoints.
+#
+# These live at `/{realm}/{realm_id}/...`. Each path item declares the realms
+# that material supports as the `realm` parameter's enum, so the enum is the
+# single source of truth (it replaces the old `x-realms`):
+#   discussions -> sections, groups, schools, districts
+#   documents   -> sections, schools
+#   events      -> sections, groups, users, schools, districts
+#   updates     -> sections, groups, users
+#   albums      -> sections, groups
+#   posts       -> sections, groups, users, schools, districts
+
+Discussions:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the discussion threads.
+      schema:
+        type: string
+        enum: [sections, groups, schools, districts]
+  get:
+    tags: [Discussions]
+    summary: List discussions in a realm
+    description: >
+      View a paged list of discussion threads in the realm. Supports
+      `with_attachments` and `with_tags`.
+    operationId: listDiscussions
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+      - $ref: '../components/parameters/_index.yaml#/with_tags'
+    responses:
+      '200':
+        description: A paged collection of discussions.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/DiscussionCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  post:
+    tags: [Discussions]
+    summary: Create a discussion
+    operationId: createDiscussion
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/DiscussionCreate' }
+    responses:
+      '201':
+        description: The created discussion.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Discussion' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+DiscussionItem:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the discussion threads.
+      schema:
+        type: string
+        enum: [sections, groups, schools, districts]
+  get:
+    tags: [Discussions]
+    summary: Get a discussion
+    description: View a specified discussion thread. Supports `with_attachments` and `with_tags`.
+    operationId: getDiscussion
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/post_id'
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+      - $ref: '../components/parameters/_index.yaml#/with_tags'
+    responses:
+      '200':
+        description: A discussion.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Discussion' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Discussions]
+    summary: Update a discussion
+    operationId: updateDiscussion
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/post_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/DiscussionWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Discussions]
+    summary: Delete a discussion
+    description: Delete a discussion thread (cannot be undone).
+    operationId: deleteDiscussion
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/post_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+DiscussionComments:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the discussion threads.
+      schema:
+        type: string
+        enum: [sections, groups, schools, districts]
+  get:
+    tags: [Discussions]
+    summary: List discussion replies
+    description: View a paged list of replies to the discussion thread.
+    operationId: listDiscussionComments
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/post_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+    responses:
+      '200':
+        description: A paged collection of replies.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/CommentCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  post:
+    tags: [Discussions]
+    summary: Reply to a discussion
+    operationId: createDiscussionComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/post_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/CommentWritable' }
+    responses:
+      '201':
+        description: The created reply.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Comment' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+DiscussionComment:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the discussion threads.
+      schema:
+        type: string
+        enum: [sections, groups, schools, districts]
+  get:
+    tags: [Discussions]
+    summary: Get a discussion reply
+    operationId: getDiscussionComment
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/post_id'
+      - $ref: '../components/parameters/_index.yaml#/comment_id'
+    responses:
+      '200':
+        description: A reply.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Comment' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Discussions]
+    summary: Delete a discussion reply
+    description: Delete a reply (cannot be undone). Admins see `status` for deleted replies.
+    operationId: deleteDiscussionComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/post_id'
+      - $ref: '../components/parameters/_index.yaml#/comment_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+Documents:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the documents.
+      schema:
+        type: string
+        enum: [sections, schools]
+  get:
+    tags: [Documents]
+    summary: List documents in a realm
+    description: >
+      View a paged list of documents (standalone files/links) in the realm.
+      Documents always include their `attachments` block; `with_tags` is also
+      supported. School-realm document listings are privileged.
+    operationId: listDocuments
+    x-student-access: ok
+    x-student-access-by-realm: { schools: forbidden, sections: ok }
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - $ref: '../components/parameters/_index.yaml#/with_tags'
+    responses:
+      '200':
+        description: A paged collection of documents.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/DocumentCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  post:
+    tags: [Documents]
+    summary: Create a document
+    description: >
+      Create a document. Exactly one attachment is required — a link/embed via
+      `url`, or uploaded files via `file-attachment` (files win when both are
+      given).
+    operationId: createDocument
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/DocumentWritable' }
+    responses:
+      '201':
+        description: The created document.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Document' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+DocumentItem:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the documents.
+      schema:
+        type: string
+        enum: [sections, schools]
+  get:
+    tags: [Documents]
+    summary: Get a document
+    operationId: getDocument
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+      - $ref: '../components/parameters/_index.yaml#/with_tags'
+    responses:
+      '200':
+        description: A document.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Document' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Documents]
+    summary: Update a document
+    description: Title and published state can be changed.
+    operationId: updateDocument
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/DocumentWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Documents]
+    summary: Delete a document
+    description: Delete a document (cannot be undone).
+    operationId: deleteDocument
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+Events:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the events.
+      schema:
+        type: string
+        enum: [sections, groups, users, schools, districts]
+  get:
+    tags: [Events]
+    summary: List events in a realm
+    description: >
+      View a paged list of events in the realm. `start_date`/`end_date`
+      (YYYY-MM-DD or YYYYMMDD) limit the result set by date; due dates of
+      assignments/discussions appear as read-only events of those types.
+    operationId: listEvents
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - name: start_date
+        in: query
+        description: Range start (YYYY-MM-DD or YYYYMMDD).
+        schema: { type: string }
+      - name: end_date
+        in: query
+        description: Range end (YYYY-MM-DD or YYYYMMDD).
+        schema: { type: string }
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+    responses:
+      '200':
+        description: A paged collection of events.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/EventCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  post:
+    tags: [Events]
+    summary: Create an event
+    operationId: createEvent
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/EventCreate' }
+    responses:
+      '201':
+        description: The created event.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Event' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+EventItem:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the events.
+      schema:
+        type: string
+        enum: [sections, groups, users, schools, districts]
+  get:
+    tags: [Events]
+    summary: Get an event
+    operationId: getEvent
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '200':
+        description: An event.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Event' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Events]
+    summary: Update an event
+    description: Assignment/discussion due-events cannot be modified directly.
+    operationId: updateEvent
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/EventWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Events]
+    summary: Delete an event
+    description: Delete an event (cannot be undone). Due-events of assignments/discussions cannot be deleted directly.
+    operationId: deleteEvent
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+Updates:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the updates.
+      schema:
+        type: string
+        enum: [sections, groups, users]
+  get:
+    tags: [Updates]
+    summary: List updates in a realm
+    description: >
+      View a paged list of Edge posts in the realm. `with_attachments` includes
+      attachments and polls.
+    operationId: listUpdates
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+    responses:
+      '200':
+        description: A paged collection of updates.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/UpdateCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  post:
+    tags: [Updates]
+    summary: Create an update
+    description: Create an update for the signed-in user.
+    operationId: createUpdate
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/UpdateWritable' }
+    responses:
+      '201':
+        description: The created update (with attachments).
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Update' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+UpdateItem:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the updates.
+      schema:
+        type: string
+        enum: [sections, groups, users]
+  get:
+    tags: [Updates]
+    summary: Get an update
+    operationId: getUpdate
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/update_id'
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+    responses:
+      '200':
+        description: An update.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Update' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Updates]
+    summary: Edit an update
+    description: >
+      Edit the body of an update. If someone other than the author edits it
+      (e.g. an admin), the posting user id does not change.
+    operationId: updateUpdate
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/update_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/UpdateWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Updates]
+    summary: Delete an update
+    description: Delete an update (cannot be undone).
+    operationId: deleteUpdate
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/update_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+UpdateComments:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the updates.
+      schema:
+        type: string
+        enum: [sections, groups, users]
+  get:
+    tags: [Updates]
+    summary: List update comments
+    operationId: listUpdateComments
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/update_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+    responses:
+      '200':
+        description: A paged collection of comments.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/CommentCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  post:
+    tags: [Updates]
+    summary: Comment on an update
+    operationId: createUpdateComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/update_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/CommentWritable' }
+    responses:
+      '201':
+        description: The created comment.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Comment' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+UpdateComment:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the updates.
+      schema:
+        type: string
+        enum: [sections, groups, users]
+  get:
+    tags: [Updates]
+    summary: Get an update comment
+    operationId: getUpdateComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/update_id'
+      - $ref: '../components/parameters/_index.yaml#/comment_id'
+    responses:
+      '200':
+        description: A comment.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Comment' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Updates]
+    summary: Delete an update comment
+    description: Delete a comment (cannot be undone).
+    operationId: deleteUpdateComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/update_id'
+      - $ref: '../components/parameters/_index.yaml#/comment_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+Albums:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the media albums.
+      schema:
+        type: string
+        enum: [sections, groups]
+  get:
+    tags: [Media albums]
+    summary: List media albums in a realm
+    description: '`withcontent=1` includes the contents of each album in the response.'
+    operationId: listAlbums
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - name: withcontent
+        in: query
+        description: Set to `1` to include album contents.
+        schema: { type: string, enum: ["1"] }
+    responses:
+      '200':
+        description: A paged collection of albums.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/MediaAlbumCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  post:
+    tags: [Media albums]
+    summary: Create a media album
+    operationId: createAlbum
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/MediaAlbumCreate' }
+    responses:
+      '201':
+        description: The created album.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/MediaAlbum' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+AlbumItem:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the media albums.
+      schema:
+        type: string
+        enum: [sections, groups]
+  get:
+    tags: [Media albums]
+    summary: Get a media album
+    operationId: getAlbum
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/album_id'
+    responses:
+      '200':
+        description: An album.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/MediaAlbumCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Media albums]
+    summary: Update a media album
+    operationId: updateAlbum
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/album_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/MediaAlbumWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Media albums]
+    summary: Delete a media album
+    description: Delete an album (cannot be undone).
+    operationId: deleteAlbum
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/album_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+AlbumContentCreate:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the media albums.
+      schema:
+        type: string
+        enum: [sections, groups]
+  post:
+    tags: [Media albums]
+    summary: Add content to a media album
+    description: >
+      Add uploaded files (see the upload flow) to the album, optionally with
+      per-file caption/order `extras`. Requires album content permissions.
+    operationId: createAlbumContent
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/album_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/MediaContentWritable' }
+    responses:
+      '201':
+        description: Created content objects.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/MediaContentCollection' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+AlbumContentItem:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the media albums.
+      schema:
+        type: string
+        enum: [sections, groups]
+  get:
+    tags: [Media albums]
+    summary: Get media album content
+    operationId: getAlbumContent
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/album_id'
+      - $ref: '../components/parameters/_index.yaml#/content_id'
+    responses:
+      '200':
+        description: Album content.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/MediaContentCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Media albums]
+    summary: Update media album content
+    description: Caption (and display order) can be changed.
+    operationId: updateAlbumContent
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/album_id'
+      - $ref: '../components/parameters/_index.yaml#/content_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              caption: { type: string }
+              display_order: { type: integer }
+            additionalProperties: false
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Media albums]
+    summary: Delete media album content
+    description: Delete album content (cannot be undone).
+    operationId: deleteAlbumContent
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/album_id'
+      - $ref: '../components/parameters/_index.yaml#/content_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+AlbumComments:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the media albums.
+      schema:
+        type: string
+        enum: [sections, groups]
+  get:
+    tags: [Media albums]
+    summary: List media album content comments
+    operationId: listAlbumComments
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/album_id'
+      - $ref: '../components/parameters/_index.yaml#/content_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+    responses:
+      '200':
+        description: A paged collection of comments.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/CommentCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  post:
+    tags: [Media albums]
+    summary: Comment on media album content
+    operationId: createAlbumComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/album_id'
+      - $ref: '../components/parameters/_index.yaml#/content_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/CommentWritable' }
+    responses:
+      '201':
+        description: The created comment.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Comment' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+AlbumComment:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the media albums.
+      schema:
+        type: string
+        enum: [sections, groups]
+  get:
+    tags: [Media albums]
+    summary: Get a media album content comment
+    operationId: getAlbumComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/album_id'
+      - $ref: '../components/parameters/_index.yaml#/content_id'
+      - $ref: '../components/parameters/_index.yaml#/comment_id'
+    responses:
+      '200':
+        description: A comment.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Comment' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Media albums]
+    summary: Delete a media album content comment
+    description: Delete a comment (cannot be undone).
+    operationId: deleteAlbumComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/album_id'
+      - $ref: '../components/parameters/_index.yaml#/content_id'
+      - $ref: '../components/parameters/_index.yaml#/comment_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+Pages:
+  get:
+    tags: [Pages]
+    summary: List pages
+    description: View a paged list of pages in the section. `withcontent=1` includes page bodies; `with_tags` supported.
+    operationId: listPages
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - name: withcontent
+        in: query
+        description: Set to `1` to include contents (album contents or page bodies) in the response.
+        schema: { type: string, enum: ["1"] }
+      - $ref: '../components/parameters/_index.yaml#/with_tags'
+    responses:
+      '200':
+        description: A paged collection of pages.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/PageCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  post:
+    tags: [Pages]
+    summary: Create a page
+    operationId: createPage
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/PageCreate' }
+    responses:
+      '201':
+        description: The created page.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Page' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+PageItem:
+  get:
+    tags: [Pages]
+    summary: Get a page
+    description: Note the singular `page` path segment (the list is `pages`).
+    operationId: getPage
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+      - $ref: '../components/parameters/_index.yaml#/with_tags'
+    responses:
+      '200':
+        description: A page.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Page' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Pages]
+    summary: Update a page
+    operationId: updatePage
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/PageWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Pages]
+    summary: Delete a page
+    description: Delete a page (cannot be undone).
+    operationId: deletePage
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+Posts:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the blog posts.
+      schema:
+        type: string
+        enum: [sections, groups, users, schools, districts]
+  get:
+    tags: [Blog posts]
+    summary: List blog posts in a realm
+    x-student-access: ok
+    x-student-access-by-realm: { groups: forbidden, schools: forbidden, sections: forbidden, users: ok }
+    operationId: listPosts
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+    responses:
+      '200':
+        description: A paged collection of blog posts.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/BlogPostCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  post:
+    tags: [Blog posts]
+    summary: Create a blog post
+    operationId: createPost
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/BlogPostCreate' }
+    responses:
+      '201':
+        description: The created blog post.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/BlogPost' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+PostItem:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the blog posts.
+      schema:
+        type: string
+        enum: [sections, groups, users, schools, districts]
+  get:
+    tags: [Blog posts]
+    summary: Get a blog post
+    operationId: getPost
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/post_id'
+    responses:
+      '200':
+        description: A blog post.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/BlogPost' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Blog posts]
+    summary: Update a blog post
+    operationId: updatePost
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/post_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/BlogPostWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Blog posts]
+    summary: Delete a blog post
+    description: Delete a blog post (cannot be undone).
+    operationId: deletePost
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/post_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+PostComments:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the blog posts.
+      schema:
+        type: string
+        enum: [sections, groups, users, schools, districts]
+  get:
+    tags: [Blog posts]
+    summary: List blog post comments
+    operationId: listPostComments
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/post_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+    responses:
+      '200':
+        description: A paged collection of comments.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/CommentCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  post:
+    tags: [Blog posts]
+    summary: Comment on a blog post
+    operationId: createPostComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/post_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/CommentWritable' }
+    responses:
+      '201':
+        description: The created comment.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Comment' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+PostComment:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the blog posts.
+      schema:
+        type: string
+        enum: [sections, groups, users, schools, districts]
+  get:
+    tags: [Blog posts]
+    summary: Get a blog post comment
+    operationId: getPostComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/post_id'
+      - $ref: '../components/parameters/_index.yaml#/comment_id'
+    responses:
+      '200':
+        description: A comment.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Comment' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Blog posts]
+    summary: Delete a blog post comment
+    description: Delete a comment (cannot be undone).
+    operationId: deletePostComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/post_id'
+      - $ref: '../components/parameters/_index.yaml#/comment_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }

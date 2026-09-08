@@ -1,0 +1,266 @@
+CoursesCollection:
+  get:
+    tags: [Courses]
+    summary: List courses (admin)
+    description: |
+      List courses in your school (paged). A course is only a container: no
+      materials live on it, and enrollment is on its sections, so being enrolled
+      grants no access here. To list a student's own classes use
+      `GET /users/{user_id}/sections`.
+
+    operationId: listCourses
+    x-student-access: forbidden
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - name: building_id
+        in: query
+        description: Only return courses for the given building.
+        schema: { type: string }
+      - name: fetch_district_course_name
+        in: query
+        description: Set to `1` to include `district_course_name`.
+        schema: { type: string, enum: ["1"] }
+    responses:
+      '200':
+        description: A paged collection of courses.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/CourseCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  post:
+    tags: [Courses]
+    summary: Create courses (single or bulk, admin)
+    description: |
+      Create a course, or up to 50 at once (wrapped in
+      `{"courses": {"course": [...]}}`, optionally with inline `sections`).
+      `update_existing=1` updates existing courses matched by `course_code` —
+      combined with inline sections this supports SIS import/sync.
+    operationId: createCourses
+    x-student-access: unknown
+    parameters:
+      - name: update_existing
+        in: query
+        description: Update existing records matched by their unique code instead of failing on conflicts.
+        schema: { type: string, enum: ["1"] }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '../components/schemas/_index.yaml#/CourseCreate'
+              - $ref: '../components/schemas/_index.yaml#/CourseBulkInput'
+    responses:
+      '201':
+        description: The created course, or per-course bulk results.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '../components/schemas/_index.yaml#/Course'
+                - type: object
+                  properties:
+                    course: { type: array, items: { $ref: '../components/schemas/_index.yaml#/BulkResult' } }
+                  additionalProperties: false
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  put:
+    tags: [Courses]
+    summary: Update courses (bulk, admin)
+    description: Modify multiple courses (up to 50) — each object must include `id`.
+    operationId: updateCoursesBulk
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/CourseBulkInput' }
+    responses:
+      '200':
+        description: Per-course results.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                course: { type: array, items: { $ref: '../components/schemas/_index.yaml#/BulkResult' } }
+              additionalProperties: false
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  delete:
+    tags: [Courses]
+    summary: Delete courses (bulk, admin)
+    description: Delete up to 50 courses (cannot be undone). IDs go in the `course_ids` query parameter.
+    operationId: deleteCoursesBulk
+    x-student-access: unknown
+    parameters:
+      - name: course_ids
+        in: query
+        required: true
+        description: Comma-separated course IDs.
+        schema: { type: string }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+CourseItem:
+  get:
+    tags: [Courses]
+    summary: Get a course (admin)
+    description: >
+      View a course's own fields (title, code, department, credits). A course
+      holds no materials — those belong to its sections — so this is rarely what
+      you want; see `GET /courses/{course_id}/sections`.
+    operationId: getCourse
+    x-student-access: forbidden
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/course_id'
+    responses:
+      '200':
+        description: A course.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Course' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Courses]
+    summary: Update a course (admin)
+    description: Modify a course. Returns `204 No Content`.
+    operationId: updateCourse
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/course_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/CourseWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Courses]
+    summary: Delete a course (admin)
+    description: Delete a course (cannot be undone).
+    operationId: deleteCourse
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/course_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+CourseSections:
+  get:
+    tags: [Courses]
+    summary: List a course's sections (admin)
+    description: |
+      List sections for a course (paged). `include_past=1` includes sections
+      from expired grading periods. Administering the school is what grants
+      access here, not being enrolled — to reach your own classes use
+      `GET /users/{id}/sections`, or `GET /sections/{id}` if you already have
+      the section id.
+    operationId: listCourseSections
+    x-student-access: forbidden
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/course_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - name: include_past
+        description: Include sections from expired grading periods.
+        in: query
+        schema: { type: string, enum: ["1"] }
+    responses:
+      '200':
+        description: A paged collection of sections.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/SectionCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  post:
+    tags: [Courses]
+    summary: Create a section (admin)
+    description: Create a course section under this course.
+    operationId: createSection
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/course_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/SectionCreate' }
+    responses:
+      '201':
+        description: The created section.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Section' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+RealmFolder:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the materials tree. `courses` and `sections`
+        behave identically here (see the operation description).
+      schema:
+        type: string
+        enum: [courses, sections, groups]
+  get:
+    tags: [Folders]
+    summary: Get a materials tree folder
+    description: |
+      Returns the contents of a folder with an API pointer for each item, plus
+      the folder's parent if it has one. Folder `0` is the root; child folders
+      are fetched by their own id. Contents come back in the order they appear
+      in the realm.
+
+      **`{realm_id}` is a section id, not a course id.** The official docs write
+      this endpoint as `courses/{course_id}/folder/{folder_id}`, but a course is
+      only a container — objects belong to its sections — and passing a real
+      course id returns `403`. What each combination actually returns:
+
+      | request | result |
+      | --- | --- |
+      | `courses/{section id}/folder/0` | `200` |
+      | `courses/{course id}/folder/0` | `403` |
+      | `sections/{section id}/folder/0` | `200` |
+      | `sections/{course id}/folder/0` | `404` |
+
+      So the realm segment is interchangeable and the id is what matters. Use
+      `sections` (or `groups`, keyed by group id) and read section ids from
+      `GET /users/{user_id}/sections`.
+    operationId: getRealmFolder
+    x-student-access: ok
+    x-student-access-by-realm: { courses: forbidden, groups: ok, sections: ok }
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - $ref: '../components/parameters/_index.yaml#/folder_id'
+    responses:
+      '200':
+        description: The folder itself, its parent, and its contents.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/CourseFolder' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }

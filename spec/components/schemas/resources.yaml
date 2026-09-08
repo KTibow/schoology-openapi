@@ -1,0 +1,127 @@
+CollectionWritable:
+  type: object
+  title: Collection (writable fields)
+  properties:
+    title: { type: string, description: Required. The collection title. }
+  additionalProperties: false
+CollectionCreate:
+  type: object
+  title: Collection create
+  allOf:
+    - $ref: '#/CollectionWritable'
+    - type: object
+      required: [title]
+Collection:
+  type: object
+  title: Resource collection
+  description: >
+    A container for resource templates. Every user has default collections
+    (`is_default` `1` = Home, `2` = Downloads); group/school realm collections
+    carry `realm`, `realm_id` and `realm_link`.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: string }
+    uid: { $ref: 'common.yaml#/NullableSchoologyId', description: Owner user id (null for realm collections). }
+    is_default: { type: [integer, string], description: "`0` regular, `1` default Home, `2` default Downloads." }
+    shared_users: { type: [integer, string] }
+    realm: { type: [string, "null"], description: e.g. `group` for realm-owned collections. }
+    realm_id: { $ref: 'common.yaml#/NullableSchoologyId' }
+    realm_link: { type: [string, "null"], format: uri }
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id]
+  additionalProperties: false
+CollectionCollection:
+  type: object
+  title: Collection listing
+  properties:
+    collection:
+      type: array
+      items: { $ref: '#/Collection' }
+    count: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+ResourceWritable:
+  type: object
+  title: Resource template (writable fields)
+  description: Fields for creating/updating resource templates. Documents require an attachment (same attachment array as other content).
+  properties:
+    title: { type: string, description: Required (documents excepted). }
+    type: { type: string, enum: [assessment, assignment, discussion, page, album, document, folder], description: Required. Template type. }
+    resource_notes: { type: string }
+    folder_id: { $ref: 'common.yaml#/SchoologyId', description: Resource folder within the collection. }
+    attachments:
+      type: array
+      description: For documents — the standard attachment array (link/file/video/embed/resource).
+      items:
+        type: object
+        properties:
+          id: { $ref: 'common.yaml#/SchoologyId' }
+          fid: { $ref: 'common.yaml#/SchoologyId' }
+          url: { type: string }
+          embed: { type: string }
+          resource: { type: [integer, string] }
+          title: { type: string }
+        additionalProperties: false
+    template_fields:
+      type: object
+      description: >
+        Fields specific to the template type — page/discussion: `body`;
+        assignment/assessment: `body`, `max_points`; document:
+        `document_type` (`file`, `link`, `video`, `embed`).
+      properties:
+        body: { type: string }
+        max_points: { type: [integer, number, string] }
+        document_type: { type: string, enum: [file, link, video, embed] }
+      additionalProperties: false
+  additionalProperties: false
+Resource:
+  type: object
+  title: Resource template
+  description: A resource template inside a collection (or a realm resource collection for groups/schools).
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: [string, "null"] }
+    type: { type: [string, "null"], description: "e.g. `document`, `folder`, `page`." }
+    resource_notes: { type: [string, "null"] }
+    collection_id: { $ref: 'common.yaml#/NullableSchoologyId' }
+    uid: { $ref: 'common.yaml#/NullableSchoologyId', description: Creator user id. }
+    last_updated: { $ref: 'common.yaml#/Timestamp' }
+    created: { $ref: 'common.yaml#/Timestamp' }
+    template_fields:
+      type: [object, "null"]
+      properties:
+        body: { type: [string, "null"] }
+        max_points: { type: [integer, number, string, "null"] }
+        document_type: { type: [string, "null"] }
+      additionalProperties: false
+    folder_id: { $ref: 'common.yaml#/NullableSchoologyId', description: "`0` = root of the collection." }
+    color: { type: [string, "null"], description: "Undocumented; seen on folder templates." }
+  required: [id]
+  additionalProperties: false
+ResourceCollection:
+  type: object
+  title: Resource listing
+  properties:
+    resources:
+      type: [array, "null"]
+      items: { $ref: '#/Resource' }
+    total: { $ref: 'common.yaml#/Total' }
+    parent:
+      type: [object, "null"]
+      description: >
+        The container being listed — a collection (with `parent_type`
+        `collection` and `location`) when a folder filter is applied.
+      properties:
+        id: { $ref: 'common.yaml#/SchoologyId' }
+        title: { type: [string, "null"] }
+        shared_users: { type: [integer, string, "null"] }
+        is_default: { type: [integer, string, "null"] }
+        uid: { $ref: 'common.yaml#/NullableSchoologyId' }
+        realm: { type: [string, "null"] }
+        realm_id: { $ref: 'common.yaml#/NullableSchoologyId' }
+        realm_link: { type: [string, "null"], format: uri }
+        parent_type: { type: [string, "null"], description: e.g. `collection` }
+        location: { type: [string, "null"], format: uri }
+      additionalProperties: false
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false

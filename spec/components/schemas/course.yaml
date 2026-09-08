@@ -1,0 +1,292 @@
+CourseWritable:
+  type: object
+  title: Course (writable fields)
+  properties:
+    title: { type: string, description: Required. }
+    course_code: { type: string, description: Required. Unique across the school; not editable when synced. }
+    department: { type: string }
+    description: { type: string }
+    credits: { type: number }
+    synced: { $ref: 'common.yaml#/BinaryFlag', description: Mark as synced with an external system. }
+    grade_level_range_start: { type: integer, minimum: 0, maximum: 15, description: "`0` none, `1` Pre-K, `2` K, `3`–`14` grades 1–12, `15` Higher-Ed." }
+    grade_level_range_end: { type: integer, minimum: 0, maximum: 15, description: Must exceed `grade_level_range_start` if used. }
+    subject_area: { type: integer, minimum: 0, maximum: 9, description: "`0` Other, `1` Health & PE, `2` Language Arts, `3` Mathematics, `4` Prof. Dev., `5` Science, `6` Social Studies, `7` Special Ed., `8` Technology, `9` Arts." }
+    district_course_name: { type: string, description: Uniquely identifies courses across buildings for a district. }
+  additionalProperties: false
+CourseCreate:
+  type: object
+  title: Course create
+  allOf:
+    - $ref: '#/CourseWritable'
+    - type: object
+      required: [title, course_code]
+Course:
+  type: object
+  title: Course
+  description: |
+    A thin container for sections. Materials belong to sections, not courses.
+    In SIS-synced schools each course often corresponds to a single
+    course-section pairing (UUID-shaped `course_code`). Direct course reads are
+    admin-only (students receive 403 even for courses they are
+    enrolled in); they read materials via `/sections/{id}` or the materials
+    folder tree.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    building_id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: string }
+    course_code: { type: string }
+    department: { type: [string, "null"] }
+    description: { type: [string, "null"] }
+    credits: { type: [number, string] }
+    synced: { $ref: 'common.yaml#/BinaryFlag' }
+    grade_level_range_start: { type: [integer, string], minimum: 0, maximum: 15, description: "`0` none, `1` Pre-K, `2` K, `3`–`14` grades 1–12, `15` Higher-Ed." }
+    grade_level_range_end: { type: [integer, string], minimum: 0, maximum: 15 }
+    subject_area: { type: [integer, string], minimum: 0, maximum: 9, description: "`0` Other, `1` Health & PE, `2` Language Arts, `3` Mathematics, `4` Prof. Dev., `5` Science, `6` Social Studies, `7` Special Ed., `8` Technology, `9` Arts." }
+    district_course_name: { type: [string, "null"], description: Only returned when `fetch_district_course_name=1`. }
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id]
+  additionalProperties: false
+CourseCollection:
+  type: object
+  title: Course collection
+  properties:
+    course:
+      type: array
+      items: { $ref: '#/Course' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+CourseBulkInput:
+  type: object
+  title: Courses bulk input
+  description: Wrapper for bulk course create/update (up to 50). Sections may be created inline.
+  properties:
+    courses:
+      type: object
+      properties:
+        course:
+          type: array
+          items:
+            type: object
+            allOf:
+              - $ref: '#/CourseCreate'
+            properties:
+              sections:
+                type: object
+                description: Inline section creation (with `update_existing`, usable for SIS import).
+                properties:
+                  section:
+                    type: array
+                    items: { $ref: '#/SectionCreate' }
+                additionalProperties: false
+            additionalProperties: false
+      additionalProperties: false
+  additionalProperties: false
+SectionOptions:
+  type: object
+  title: Section options
+  description: Settings block embedded in section objects (`options`).
+  properties:
+    course_format: { type: [integer, string, "null"], description: "`1` basic (default), `2` topic-based." }
+    weighted_grading_categories: { $ref: 'common.yaml#/BinaryFlag' }
+    upload_documents: { $ref: 'common.yaml#/BinaryFlag', description: Students can upload documents to the course profile. }
+    upload_document: { $ref: 'common.yaml#/BinaryFlag', description: Legacy spelling of `upload_documents` accepted on write. }
+    create_discussion: { $ref: 'common.yaml#/BinaryFlag', description: Students can create discussion topics. }
+    member_post: { $ref: 'common.yaml#/BinaryFlag', description: Students can post to the course feed. }
+    member_post_comment: { $ref: 'common.yaml#/BinaryFlag', description: Students can comment on course feed entries. }
+    default_grading_scale_id: { $ref: 'common.yaml#/NullableSchoologyId', description: Default grading scale for the section; undocumented. }
+    hide_overall_grade: { type: [integer, string, "null"], description: Undocumented; hides the overall grade from students. }
+    hide_grading_period_grade: { type: [integer, string, "null"], description: Undocumented; hides per-period grades from students. }
+    allow_custom_overall_grade: { type: [integer, string, "null"], description: Undocumented. }
+    allow_custom_overall_grade_text: { type: [integer, string, "null"], description: Undocumented. }
+    content_index_visibility:
+      type: [object, array, "null"]
+      description: >
+        Which material types appear in the content index for students. Comes
+        back as an empty array on a freshly created section, so handle both
+        shapes.
+      items: { type: string }
+      properties:
+        topics: { $ref: 'common.yaml#/BinaryFlag' }
+        assignments: { $ref: 'common.yaml#/BinaryFlag' }
+        assessments: { $ref: 'common.yaml#/BinaryFlag' }
+        course_assessment: { $ref: 'common.yaml#/BinaryFlag' }
+        common_assessments: { $ref: 'common.yaml#/BinaryFlag' }
+        documents: { $ref: 'common.yaml#/BinaryFlag' }
+        discussion: { $ref: 'common.yaml#/BinaryFlag' }
+        album: { $ref: 'common.yaml#/BinaryFlag' }
+        pages: { $ref: 'common.yaml#/BinaryFlag' }
+      additionalProperties: false
+  additionalProperties: false
+SectionWritable:
+  type: object
+  title: Section (writable fields)
+  description: Fields accepted by POST/PUT on section endpoints.
+  properties:
+    title: { type: string, description: Required (`section_title` also accepted). }
+    section_code: { type: string, description: Unique across course + grading period; required if `section_school_code` unset. }
+    section_school_code: { type: string, description: Unique across the school; typically the SIS section ID. }
+    grading_periods: { type: array, description: Required. Grading period IDs this section spans., items: { type: integer } }
+    description: { type: string }
+    location: { type: string }
+    meeting_days: { type: array, description: "`0` Sunday … `7` Saturday.", items: { type: integer } }
+    start_time: { type: string, description: "`HH:mm`; not used with class-period blocks." }
+    end_time: { type: string }
+    class_periods: { type: array, description: Class period IDs when the school uses period blocks., items: { type: integer } }
+    synced: { $ref: 'common.yaml#/BinaryFlag' }
+    options: { $ref: '#/SectionOptions' }
+  additionalProperties: false
+SectionCreate:
+  type: object
+  title: Section create
+  allOf:
+    - $ref: '#/SectionWritable'
+    - type: object
+      required: [title, grading_periods]
+Section:
+  type: object
+  title: Section
+  description: |
+    A course section, embedding its parent course's `course_id`, `course_title`
+    and `course_code`. Students can read `/sections/{id}` or
+    `/sections?section_school_codes=…`; `GET /courses/{id}/sections`
+    is admin-only.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    course_title: { type: [string, "null"] }
+    course_code: { type: [string, "null"] }
+    course_id: { $ref: 'common.yaml#/SchoologyId' }
+    school_id: { $ref: 'common.yaml#/SchoologyId' }
+    building_id: { $ref: 'common.yaml#/NullableSchoologyId', description: Undocumented; present on some deployments, absent on the `section_school_codes` lookup. }
+    access_code: { type: [string, "null"], description: Auto-generated `XXXXX-XXXXX` enrollment code; blank/null when disabled. }
+    section_title: { type: string }
+    section_code: { type: [string, "null"] }
+    section_school_code: { type: [string, "null"] }
+    synced: { $ref: 'common.yaml#/BinaryFlag' }
+    active: { $ref: 'common.yaml#/BinaryFlag', description: Active in its grading periods. }
+    description: { type: [string, "null"] }
+    subject_area: { type: [string, integer], description: Mirrors the course subject area on reads. }
+    grade_level_range_start: { type: [string, integer] }
+    grade_level_range_end: { type: [string, integer] }
+    parent_id: { $ref: 'common.yaml#/NullableSchoologyId', description: Undocumented; parent section id (null for top-level). }
+    grading_periods: { type: array, items: { type: integer } }
+    profile_url: { type: [string, "null"], format: uri }
+    location: { type: [string, "null"] }
+    meeting_days: { type: array, description: "`0` Sunday … `7` Saturday (often `[\"\" ]` when unset).", items: { type: [integer, string] } }
+    start_time: { type: [string, "null"] }
+    end_time: { type: [string, "null"] }
+    class_periods: { type: array, items: { type: integer } }
+    weight: { type: [string, number, "null"], description: Grade weight of the section. }
+    options: { $ref: '#/SectionOptions' }
+    admin: { $ref: 'common.yaml#/BinaryFlag', description: Whether the requesting user is an admin of this section. }
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id]
+  additionalProperties: false
+SectionCollection:
+  type: object
+  title: Section collection
+  properties:
+    section:
+      type: array
+      items: { $ref: '#/Section' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+SectionsBulkInput:
+  type: object
+  title: Sections bulk input
+  properties:
+    sections:
+      type: object
+      properties:
+        section:
+          type: array
+          items: { $ref: '#/SectionCreate' }
+      additionalProperties: false
+  additionalProperties: false
+SectionBulkResult:
+  type: object
+  title: Section bulk result
+  properties:
+    response_code: { type: [integer, string] }
+    location: { type: [string, "null"], format: uri }
+    id: { $ref: 'common.yaml#/NullableSchoologyId' }
+    section_code: { type: [string, "null"] }
+    section_school_code: { type: [string, "null"] }
+    synced: { type: [integer, string, "null"] }
+    grading_periods: { type: [array, "null"], items: { type: integer } }
+    transfer_url: { type: [string, "null"], format: uri }
+    title: { type: [string, "null"] }
+    description: { type: [string, "null"] }
+    error: { type: [string, "null"] }
+  additionalProperties: false
+SectionCopyInput:
+  type: object
+  title: Section copy request
+  description: |
+    Body of `POST /sections/copy` (wrapped in `sections.section`). Copies a
+    source section's content into a new or existing section as an asynchronous
+    background job. Identify the source with `source_section_id` or
+    `source_section_school_code`.
+
+    How the destination is resolved depends on which field you send:
+
+    - `section_id` — the section must already exist, you must have permission
+      on it, and it must have no content of its own.
+    - `section_school_code` — copies into that section if it exists (again,
+      only when empty), and creates it if it does not.
+    - `section_code` — always creates a new section.
+  required: [title, grading_periods]
+  properties:
+    source_section_id: { $ref: 'common.yaml#/SchoologyId' }
+    source_section_school_code: { type: string }
+    section_id: { $ref: 'common.yaml#/SchoologyId', description: Copy into this existing section. }
+    section_school_code: { type: string, description: 'Copy into the section with this school code, creating it if missing.' }
+    section_code: { type: string, description: Create a new section with this code. }
+    course_id: { $ref: 'common.yaml#/SchoologyId', description: Parent course for the copied section. }
+    course_code: { type: string, description: Parent course (by code) for the copied section. }
+    title: { type: string }
+    description: { type: string }
+    grading_periods: { type: array, items: { type: integer } }
+    synced: { $ref: 'common.yaml#/BinaryFlag', description: Lock `section_school_code`/`grading_periods` from edits; inherited from the source when unset. }
+  additionalProperties: false
+CourseFolderItem:
+  type: object
+  title: Course folder item
+  description: |
+    Entry in a materials folder (`GET /{realm}/{realm_id}/folder/{folder_id}`).
+    A folder's `self`/`parent` uses the same fields. Folder id `0` is the root
+    of the realm's materials tree. `location` points at the API endpoint for
+    the item; ordering matches the materials page.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: [string, "null"] }
+    body: { type: [string, "null"], description: "Description/body when the content has one." }
+    type: { type: [string, "null"], description: "Content type — `folder`, `assignment`, `discussion`, `media-album`, `package`, …" }
+    location: { type: [string, "null"], format: uri, description: "API endpoint to retrieve the content from." }
+    url: { type: [string, "null"], format: uri, description: "Launch URL (e.g. for packages)." }
+    available: { $ref: 'common.yaml#/BinaryFlag' }
+    publish_start: { type: [string, "null"], description: Scheduled publish time (blank when not scheduled). }
+    publish_end: { type: [string, "null"] }
+    status: { $ref: 'common.yaml#/BinaryFlag' }
+    completion_status: { type: [string, "null"], description: Human-readable completion summary (may contain HTML). }
+    has_rules: { $ref: 'common.yaml#/BinaryFlag' }
+    completed: { $ref: 'common.yaml#/BinaryFlag' }
+    color: { type: [string, "null"], description: Folder color label (e.g. `blue`). }
+    document_type: { type: [string, "null"], description: "Undocumented; on file/link items (`file`, `link`, …)." }
+  additionalProperties: false
+CourseFolder:
+  type: object
+  title: Course folder
+  description: >
+    Response of `GET /{realm}/{realm_id}/folder/{folder_id}`. Despite the name
+    Schoology's docs give this endpoint, `{realm_id}` is a section (or group)
+    id — see the operation description.
+  properties:
+    self: { $ref: '#/CourseFolderItem', description: The requested folder itself. }
+    parent: { $ref: '#/CourseFolderItem', description: The parent folder (id `0` at the root). }
+    folder-item:
+      type: array
+      description: Contents of the folder, in course order.
+      items: { $ref: '#/CourseFolderItem' }
+  additionalProperties: false

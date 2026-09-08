@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Schoology REST API — OpenAPI reference</title>
+    <meta
+      name="description"
+      content="An unofficial OpenAPI 3.1 description of the Schoology (PowerSchool Learning) REST API, reconstructed from the official developer documentation and validated against a live account."
+    />
+    <link rel="icon" href="data:," />
+    <!--
+      Everything this page needs is served alongside it, so pin it to its own
+      origin. Scalar's bundle otherwise calls api.scalar.com on load (for its
+      "Ask AI" document registry) and pulls webfonts from fonts.scalar.com,
+      which would send every visitor's IP to a third party to render a static
+      reference. `connect-src 'self'` stops that; the bundle needs
+      unsafe-inline/unsafe-eval for its own runtime.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               script-src 'self' 'unsafe-inline' 'unsafe-eval';
+               style-src 'self' 'unsafe-inline';
+               img-src 'self' data: blob: https:;
+               font-src 'self' data:;
+               connect-src 'self'"
+    />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #0f1116;
+      }
+      /* Shown only if the bundle fails to load, so the page is never blank. */
+      #fallback {
+        color: #c9d1d9;
+        font:
+          15px/1.6 ui-sans-serif,
+          system-ui,
+          sans-serif;
+        max-width: 42rem;
+        margin: 4rem auto;
+        padding: 0 1.5rem;
+      }
+      #fallback a {
+        color: #58a6ff;
+      }
+
+      /*
+        Trim the sidebar to the two things it is for here: the operation tree and
+        search. Everything else in it advertises Scalar's hosted platform, and
+        none of it works on a self-contained static page whose CSP pins it to its
+        own origin -- "Ask AI" and "Generate MCP" call api.scalar.com.
+
+        Scalar is MIT (no attribution-in-UI clause), so dropping the "Powered by
+        Scalar" badge is permitted; the notice ships as THIRD-PARTY-LICENSES.txt
+        next to the bundle instead, which is what MIT actually asks for.
+
+        Neither selector is a documented API. If a Scalar upgrade renames these
+        classes the rule stops matching and the buttons come back -- visibly, and
+        without breaking the page. Re-check after upgrading.
+      */
+      /* Search row is [search <button>, an empty <div>, Ask AI <button>].
+         Target the trailing button only: the bare <div> looks like a portal
+         target for the search modal, so hiding it could break search. */
+      .flex.gap-1\.5.px-3.pt-3 > button:not(:first-child) {
+        display: none !important;
+      }
+      /* Sidebar footer: editor links, Generate MCP, branding, theme toggle. */
+      .darklight-reference {
+        display: none !important;
+      }
+
+      /*
+        Restore the sidebar's visual hierarchy. Scalar ships it inverted: the
+        x-tagGroups header ("People & realms") and the tag under it are the same
+        grey (#a4a4a4), while the leaf operation is the brightest thing in the
+        column (#e7e7e7). So the most granular row shouts and its two parents
+        whisper. With 25 tags in 4 groups that makes the tree hard to scan.
+
+        Group headers are non-clickable AND bold; the currently-selected
+        operation is also non-clickable, so `cursor-auto` alone would uppercase
+        it too. Operations are the only links whose href carries an HTTP method
+        segment.
+      */
+      .group\/button.cursor-auto.font-bold .group\/button-label {
+        color: #f2f2f2;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      a[href*="/GET/"] .group\/button-label,
+      a[href*="/POST/"] .group\/button-label,
+      a[href*="/PUT/"] .group\/button-label,
+      a[href*="/DELETE/"] .group\/button-label,
+      a[href*="/PATCH/"] .group\/button-label {
+        color: #9a9a9a;
+        font-weight: 400;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div id="fallback">
+        <h1>Schoology REST API</h1>
+        <p>
+          This reference renders with JavaScript. The machine-readable
+          description is a plain file and needs none:
+          <a href="./openapi.json">openapi.json</a> — one self-contained
+          document with no external <code>$ref</code>s.
+        </p>
+      </div>
+    </noscript>
+    <div id="app"></div>
+    <script src="./standalone.js"></script>
+    <script>
+      Scalar.createApiReference('#app', {
+        url: './openapi.json',
+        darkMode: true,
+        // Scalar's hosted-platform toolbar (Configure / Share / Deploy) is not
+        // meaningful for a self-hosted static build.
+        showToolbar: 'never',
+        // api.schoology.com sends no `access-control-allow-*` headers, on the
+        // request or the preflight, so any in-browser call from this origin is
+        // blocked. Offering "Test Request" would only produce a CORS error that
+        // looks like a bug in the spec. Copy the curl sample and run it instead.
+        hideTestRequestButton: true,
+        hideClientButton: true,
+        // No phoning home, and no webfonts from fonts.scalar.com.
+        telemetry: false,
+        withDefaultFonts: false,
+        hideDownloadButton: false,
+        documentDownloadType: 'json',
+        defaultOpenAllTags: false,
+        metaData: {
+          title: 'Schoology REST API — OpenAPI reference',
+          description:
+            'Unofficial OpenAPI 3.1 description of the Schoology REST API.',
+        },
+      });
+    </script>
+  </body>
+</html>

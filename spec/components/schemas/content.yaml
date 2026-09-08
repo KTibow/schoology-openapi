@@ -1,0 +1,648 @@
+AttachmentInput:
+  type: object
+  title: Attachment input
+  description: >
+    Entries of the `attachments` array accepted on POST/PUT of content that
+    supports attachments. What gets created is determined by which fields are
+    present. On PUT: omitting a previously-created attachment's `id` deletes it;
+    only `title` can be updated.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId', description: Existing attachment id (required on PUT to keep/update it). }
+    fid: { $ref: 'common.yaml#/SchoologyId', description: Uploaded file id (creates a file attachment). }
+    url: { type: string, description: Link URL (creates a link attachment). }
+    embed: { type: string, description: Embed code (creates an embed attachment). }
+    resource: { type: [integer, string], description: Resource template id of type `document` — converted to a file on write. }
+    title: { type: string }
+  additionalProperties: false
+AttachmentsInput:
+  type: object
+  title: Attachments input
+  properties:
+    attachments:
+      type: array
+      items: { $ref: '#/AttachmentInput' }
+  additionalProperties: false
+AssignmentWritable:
+  type: object
+  title: Assignment (writable fields)
+  description: Fields accepted by POST/PUT on assignment endpoints. `type` and `grade_item_id` are read-only.
+  properties:
+    title: { type: string, description: Required. }
+    description: { type: string, description: HTML allowed. }
+    due: { type: string, description: "`YYYY-MM-DD HH:MM:SS`." }
+    grading_scale: { type: [integer, string], description: Grading scale id; `0` for none. }
+    grading_period: { type: [integer, string], description: Grading period id; `0` for "Other". }
+    grading_category: { type: [integer, string], description: Grading category id (required for the gradebook). }
+    max_points: { type: [number, string], description: Default 100 (excl. extra credit). }
+    factor: { type: [number, string], description: Relative weight; default 1.0. }
+    is_final: { $ref: 'common.yaml#/BinaryFlag' }
+    show_comments: { $ref: 'common.yaml#/BinaryFlag' }
+    grade_stats: { $ref: 'common.yaml#/BinaryFlag' }
+    allow_dropbox: { $ref: 'common.yaml#/BinaryFlag' }
+    allow_discussion: { $ref: 'common.yaml#/BinaryFlag' }
+    published: { $ref: 'common.yaml#/BinaryFlag' }
+    assignees: { type: array, description: 'Enrollment IDs individually assigned; an empty array removes all.', items: { type: integer } }
+    grading_group_ids: { type: array, description: 'Grading groups assigned; an empty array removes all.', items: { type: integer } }
+    count_in_grade: { $ref: 'common.yaml#/BinaryFlag', description: Counts toward the calculated grade; default 1. }
+    collected_only: { $ref: 'common.yaml#/BinaryFlag', description: 'Completion-only (forms, participation); default 0.' }
+    auto_publish_grades: { $ref: 'common.yaml#/BinaryFlag', description: Default 1. }
+  additionalProperties: false
+AssignmentCreate:
+  type: object
+  title: Assignment create
+  allOf:
+    - $ref: '#/AssignmentWritable'
+    - type: object
+      required: [title]
+Assignment:
+  type: object
+  title: Assignment / grade item
+  description: |
+    An assignment (or any gradable item — the same shape is returned by the
+    `grade_items` endpoints with a `type` of `assignment`, `discussion`, …).
+    Readable by anyone enrolled in the section. Fields marked *undocumented*
+    are returned by the API but appear nowhere in Schoology's documentation —
+    they work, but nothing promises they will keep working.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: string }
+    description: { type: [string, "null"] }
+    due: { type: [string, "null"] }
+    grading_scale: { type: [integer, string, "null"] }
+    grading_period: { type: [integer, string, "null"] }
+    grading_category: { type: [integer, string, "null"] }
+    max_points: { type: [number, string, "null"] }
+    factor: { type: [number, string, "null"] }
+    is_final: { $ref: 'common.yaml#/BinaryFlag' }
+    show_comments: { $ref: 'common.yaml#/BinaryFlag' }
+    grade_stats: { $ref: 'common.yaml#/BinaryFlag' }
+    allow_dropbox: { $ref: 'common.yaml#/BinaryFlag' }
+    allow_discussion: { $ref: 'common.yaml#/BinaryFlag' }
+    published: { $ref: 'common.yaml#/BinaryFlag' }
+    type: { type: string, description: "Read-only grade-item type (`assignment`, `discussion`, `assessment`, …)." }
+    grade_item_id: { $ref: 'common.yaml#/NullableSchoologyId', description: "Read-only ID of the underlying gradable node." }
+    dropbox_submissions: { type: [integer, string, "null"], description: "Teachers only, with `with_dropbox_stats=TRUE`." }
+    dropbox_last_submission: { type: [integer, string, "null"], description: 'Teachers only; returned with `with_dropbox_stats=TRUE`.' }
+    show_rubric: { type: [boolean, "null"], description: Rubric displayed to students. }
+    assignees: { type: array, items: { type: integer } }
+    grading_group_ids: { type: array, items: { type: integer } }
+    count_in_grade: { $ref: 'common.yaml#/BinaryFlag', description: Only present when non-default. }
+    collected_only: { $ref: 'common.yaml#/BinaryFlag', description: Only present when non-default. }
+    auto_publish_grades: { $ref: 'common.yaml#/BinaryFlag' }
+    available: { $ref: 'common.yaml#/BinaryFlag' }
+    completed: { $ref: 'common.yaml#/BinaryFlag' }
+    dropbox_locked: { $ref: 'common.yaml#/BinaryFlag' }
+    grading_scale_type: { type: [integer, string, "null"] }
+    num_assignees: { type: [integer, string, "null"] }
+    completion_status: { type: [string, "null"], description: May contain HTML. }
+    display_weight: { type: [integer, string, "null"], description: Undocumented; sort weight in the materials list. }
+    folder_id: { $ref: 'common.yaml#/NullableSchoologyId', description: Undocumented; materials folder containing this item. }
+    assignment_type: { type: [string, "null"], description: Undocumented; e.g. `basic`. }
+    web_url: { type: [string, "null"], format: uri, description: Undocumented; web (non-API) URL. }
+    last_updated: { type: [integer, string, "null"], description: Undocumented; unix timestamp of the last edit. }
+    tags: { $ref: 'common.yaml#/Tags', description: Present with `with_tags=1`. }
+    attachments: { $ref: 'common.yaml#/Attachment', description: With `with_attachments=1`. }
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id]
+  additionalProperties: false
+AssignmentCollection:
+  type: object
+  title: Assignment collection
+  description: Also the response shape of the `grade_items` endpoints.
+  properties:
+    assignment:
+      type: array
+      items: { $ref: '#/Assignment' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+CommentWritable:
+  type: object
+  title: Comment (writable fields)
+  properties:
+    comment: { type: string, description: Required. The comment text. }
+    uid: { $ref: 'common.yaml#/SchoologyId', description: Author user id (defaults to the token's user). }
+    parent_id: { $ref: 'common.yaml#/SchoologyId', description: Replied-to comment id; `0` replies to the thread itself. }
+  additionalProperties: false
+Comment:
+  type: object
+  title: Comment
+  description: >
+    Comment/reply shape shared by update comments, discussion replies, album
+    comments, blog comments and submission comments (field availability varies
+    slightly per endpoint). `status` `0` deleted, `1` available, `3` pending
+    moderation.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    uid: { $ref: 'common.yaml#/SchoologyId' }
+    comment: { type: string }
+    created: { $ref: 'common.yaml#/Timestamp' }
+    parent_id: { $ref: 'common.yaml#/SchoologyId' }
+    status: { type: [integer, string] }
+    likes: { type: [integer, string] }
+    user_like_action: { type: boolean }
+    content_id: { $ref: 'common.yaml#/SchoologyId', description: Album comments — content the comment is on. }
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id]
+  additionalProperties: false
+CommentCollection:
+  type: object
+  title: Comment collection
+  properties:
+    comment:
+      type: array
+      items: { $ref: '#/Comment' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+DiscussionWritable:
+  type: object
+  title: Discussion (writable fields)
+  properties:
+    title: { type: string, description: Required. }
+    body: { type: string }
+    graded: { $ref: 'common.yaml#/BinaryFlag' }
+    due: { type: string, description: "`YYYY-MM-DD HH:MM:SS`." }
+    grading_scale: { type: [integer, string], description: Default 0. }
+    grading_period: { type: [integer, string], description: Default 0. }
+    grading_category: { type: [integer, string], description: Default 0. }
+    max_points: { type: [number, string], description: Default 100. }
+    factor: { type: [number, string], description: Default 1.0. }
+    is_final: { $ref: 'common.yaml#/BinaryFlag' }
+    published: { $ref: 'common.yaml#/BinaryFlag', description: Section discussions not tied to topics only. }
+    require_initial_post: { $ref: 'common.yaml#/BinaryFlag' }
+    count_in_grade: { $ref: 'common.yaml#/BinaryFlag' }
+    collected_only: { $ref: 'common.yaml#/BinaryFlag' }
+    auto_publish_grades: { $ref: 'common.yaml#/BinaryFlag' }
+  additionalProperties: false
+DiscussionCreate:
+  type: object
+  title: Discussion create
+  allOf:
+    - $ref: '#/DiscussionWritable'
+    - type: object
+      required: [title]
+Discussion:
+  type: object
+  title: Discussion thread
+  description: A discussion thread in districts, schools, groups or sections. Grading fields apply only in sections.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    uid: { $ref: 'common.yaml#/SchoologyId', description: Creator user id. }
+    title: { type: string }
+    body: { type: [string, "null"] }
+    weight: { type: [integer, number, string, "null"], description: Sort weight in materials. }
+    graded: { $ref: 'common.yaml#/BinaryFlag' }
+    due: { type: [string, "null"] }
+    grade_item_id: { $ref: 'common.yaml#/NullableSchoologyId' }
+    grading_scale: { type: [integer, string, "null"] }
+    grading_period: { type: [integer, string, "null"] }
+    grading_category: { type: [integer, string, "null"] }
+    max_points: { type: [number, string, "null"] }
+    factor: { type: [number, string, "null"] }
+    is_final: { type: [integer, string, "null"], enum: [0, 1, "0", "1", null], description: Binary flag; null when unset. }
+    published: { $ref: 'common.yaml#/BinaryFlag' }
+    require_initial_post: { type: [integer, string, "null"] }
+    count_in_grade: { $ref: 'common.yaml#/BinaryFlag' }
+    collected_only: { $ref: 'common.yaml#/BinaryFlag' }
+    auto_publish_grades: { $ref: 'common.yaml#/BinaryFlag' }
+    available: { $ref: 'common.yaml#/BinaryFlag' }
+    completed: { $ref: 'common.yaml#/BinaryFlag' }
+    comments_closed: { $ref: 'common.yaml#/BinaryFlag' }
+    completion_status: { type: [string, "null"] }
+    tags: { $ref: 'common.yaml#/Tags', description: Present with `with_tags=1`. }
+    attachments: { $ref: 'common.yaml#/Attachment' }
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id]
+  additionalProperties: false
+DiscussionCollection:
+  type: object
+  title: Discussion collection
+  properties:
+    discussion:
+      type: array
+      items: { $ref: '#/Discussion' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+UpdateWritable:
+  type: object
+  title: Update (writable fields)
+  properties:
+    body: { type: string, description: Required. }
+    attachments:
+      type: array
+      description: Attachments created with the post (`type` selects the kind).
+      items:
+        type: object
+        properties:
+          type: { type: string, enum: [file, link, video], description: "`file` entries carry `fid`." }
+          fid: { $ref: 'common.yaml#/SchoologyId', description: "Uploaded file id (for `type: file`)." }
+          title: { type: string }
+          url: { type: string, format: uri, description: "For `type: link` / `type: video`." }
+        additionalProperties: false
+  additionalProperties: false
+Update:
+  type: object
+  title: Update
+  description: >
+    A Twitter-style Edge post in users, groups or sections. Required on create:
+    `body`. Polls and attachments appear when requested with
+    `with_attachments=1` (or on the creating response).
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    body: { type: string }
+    uid: { $ref: 'common.yaml#/SchoologyId', description: Posting user id. }
+    display_name: { type: [string, "null"], description: Posting user's display name (docs; absent in some realm responses). }
+    created: { $ref: 'common.yaml#/Timestamp' }
+    last_updated: { $ref: 'common.yaml#/Timestamp' }
+    likes: { type: [integer, string] }
+    user_like_action: { type: boolean }
+    realm: { type: string, description: "e.g. `user`, `group`, `section`, `school`." }
+    user_id: { $ref: 'common.yaml#/NullableSchoologyId', description: "On user-realm updates." }
+    group_id: { $ref: 'common.yaml#/NullableSchoologyId', description: "On group-realm updates." }
+    section_id: { $ref: 'common.yaml#/NullableSchoologyId', description: On section-realm updates. }
+    school_id: { $ref: 'common.yaml#/NullableSchoologyId', description: On school-realm updates. }
+    num_comments: { type: [integer, string] }
+    attachments: { $ref: 'common.yaml#/Attachment' }
+    poll:
+      type: [object, "null"]
+      description: Present on polls (with `with_attachments=1` / vote responses).
+      properties:
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { $ref: 'common.yaml#/SchoologyId' }
+              title: { type: [string, "null"] }
+              count: { type: [integer, string] }
+              selected: { type: boolean }
+            additionalProperties: false
+      additionalProperties: false
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id]
+  additionalProperties: false
+UpdateCollection:
+  type: object
+  title: Update collection
+  properties:
+    update:
+      type: array
+      items: { $ref: '#/Update' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+EventWritable:
+  type: object
+  title: Event (writable fields)
+  properties:
+    title: { type: string, description: Required. }
+    description: { type: string }
+    start: { type: string, description: Required. `YYYY-MM-DD HH:MM:SS`. }
+    has_end: { $ref: 'common.yaml#/BinaryFlag', description: Default 0. }
+    end: { type: string, description: Send when `has_end` is 1. }
+    all_day: { $ref: 'common.yaml#/BinaryFlag', description: Default 0. }
+    rsvp: { type: [integer, string], enum: [0, 1, 2, "0", "1", "2"], description: "`0` no one (default), `1` invited only, `2` anyone." }
+    comments_enabled: { $ref: 'common.yaml#/BinaryFlag', description: Default 1. }
+  additionalProperties: false
+EventCreate:
+  type: object
+  title: Event create
+  allOf:
+    - $ref: '#/EventWritable'
+    - type: object
+      required: [title, start]
+Event:
+  type: object
+  title: Event
+  description: >
+    A calendar event in users, groups, sections, schools or districts.
+    Assignment/discussion due dates appear as events of the matching `type`;
+    those are read-only.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: string }
+    description: { type: [string, "null"] }
+    start: { type: [string, "null"] }
+    has_end: { $ref: 'common.yaml#/BinaryFlag' }
+    end: { type: [string, "null"] }
+    all_day: { $ref: 'common.yaml#/BinaryFlag' }
+    rsvp: { type: [integer, string] }
+    comments_enabled: { $ref: 'common.yaml#/BinaryFlag' }
+    type: { type: string, enum: [event, assignment, discussion], description: "`event`, or read-only due-event types." }
+    editable: { $ref: 'common.yaml#/BinaryFlag', description: Read-only — can the current user edit it. }
+    realm: { type: string }
+    section_id: { $ref: 'common.yaml#/NullableSchoologyId', description: 'Read-only; present when the realm is a section.' }
+    user_id: { $ref: 'common.yaml#/NullableSchoologyId', description: 'Read-only; present when the realm is a user.' }
+    assignment_id: { $ref: 'common.yaml#/NullableSchoologyId', description: Undocumented; appears on due-events. }
+    assignment_type: { type: [string, "null"], description: Undocumented; appears on due-events. }
+    web_url: { type: [string, "null"], format: uri, description: Undocumented; appears on due-events. }
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id]
+  additionalProperties: false
+EventCollection:
+  type: object
+  title: Event collection
+  properties:
+    event:
+      type: array
+      items: { $ref: '#/Event' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+DocumentWritable:
+  type: object
+  title: Document (writable fields)
+  description: >
+    Create with `url` (link/embed) or `file-attachment` (uploaded files) — when
+    both are given, files win. `display_inline` only applies to links.
+  properties:
+    title: { type: string }
+    url: { type: string, description: Link/embed target. }
+    display_inline: { $ref: 'common.yaml#/BinaryFlag', description: Open in iframe (1) vs new tab (0). }
+    file-attachment:
+      type: object
+      description: "`{ \"id\": [upload ids] }` from the upload flow."
+      properties:
+        id: { type: array, items: { type: [integer, string] } }
+      additionalProperties: false
+    published: { $ref: 'common.yaml#/BinaryFlag' }
+    count_in_grade: { $ref: 'common.yaml#/BinaryFlag' }
+    collected_only: { $ref: 'common.yaml#/BinaryFlag' }
+    auto_publish_grades: { $ref: 'common.yaml#/BinaryFlag' }
+  additionalProperties: false
+Document:
+  type: object
+  title: Document
+  description: >
+    A standalone file/link/embed, in sections and schools only. Groups have no
+    documents because the website routes group files through Resources
+    instead. Always carries an `attachments` block, because a document must
+    have exactly one attachment — so `with_attachments` changes nothing here.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: [string, "null"] }
+    course_fid: { $ref: 'common.yaml#/NullableSchoologyId', description: 'Materials-folder id holding this document (`0` at the root). The official docs call this realm "course"; the id is a section''s — see the realms note in `info.description`.' }
+    available: { $ref: 'common.yaml#/BinaryFlag' }
+    published: { $ref: 'common.yaml#/BinaryFlag' }
+    completed: { $ref: 'common.yaml#/BinaryFlag' }
+    completion_status: { type: [string, "null"], description: May contain HTML. }
+    display_weight: { type: [integer, string, "null"], description: Undocumented; sort weight in materials. }
+    grade_item_id: { $ref: 'common.yaml#/NullableSchoologyId', description: Undocumented; `0` unless gradable. }
+    tags: { $ref: 'common.yaml#/Tags', description: Present with `with_tags=1`. }
+    attachments: { $ref: 'common.yaml#/Attachment' }
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id]
+  additionalProperties: false
+DocumentCollection:
+  type: object
+  title: Document collection
+  properties:
+    document:
+      type: array
+      items: { $ref: '#/Document' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+PageWritable:
+  type: object
+  title: Page (writable fields)
+  properties:
+    title: { type: string, description: Required. }
+    body: { type: string, description: HTML content. }
+    published: { $ref: 'common.yaml#/BinaryFlag' }
+    inline: { $ref: 'common.yaml#/BinaryFlag', description: "`1` = inline page." }
+    assignees: { type: array, description: 'Enrollment IDs assigned; an empty array clears them.', items: { type: integer } }
+    grading_group_ids: { type: array, description: 'An empty array clears the assigned grading groups.', items: { type: integer } }
+  additionalProperties: false
+PageCreate:
+  type: object
+  title: Page create
+  allOf:
+    - $ref: '#/PageWritable'
+    - type: object
+      required: [title]
+Page:
+  type: object
+  title: Page
+  description: An HTML page in a section.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: [string, "null"] }
+    body: { type: [string, "null"] }
+    parent: { type: [integer, string, "null"], description: Parent page/folder. }
+    published: { $ref: 'common.yaml#/BinaryFlag' }
+    inline: { $ref: 'common.yaml#/BinaryFlag' }
+    created: { $ref: 'common.yaml#/Timestamp' }
+    children: { type: [array, "null"], description: 'Child pages.', items: { type: integer } }
+    available: { $ref: 'common.yaml#/BinaryFlag' }
+    completed: { $ref: 'common.yaml#/BinaryFlag' }
+    num_assignees: { type: [integer, string, "null"] }
+    assignees: { type: [array, "null"], items: { type: integer } }
+    grading_group_ids: { type: [array, "null"], items: { type: integer } }
+    tags: { $ref: 'common.yaml#/Tags', description: Present with `with_tags=1`. }
+    completion_status: { type: [string, "null"] }
+    display_weight: { type: [integer, string, "null"], description: Undocumented; sort weight in materials. }
+    folder_id: { $ref: 'common.yaml#/NullableSchoologyId', description: Undocumented; materials folder containing the page. }
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id]
+  additionalProperties: false
+PageCollection:
+  type: object
+  title: Page collection
+  properties:
+    page:
+      type: array
+      items: { $ref: '#/Page' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+BlogPostWritable:
+  type: object
+  title: Blog post (writable fields)
+  properties:
+    title: { type: string, description: Required. }
+    body: { type: string, description: HTML — line breaks need `<br />`. }
+  additionalProperties: false
+BlogPostCreate:
+  type: object
+  title: Blog post create
+  allOf:
+    - $ref: '#/BlogPostWritable'
+    - type: object
+      required: [title]
+BlogPost:
+  type: object
+  title: Blog post
+  description: A blog post in any realm.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: string }
+    body: { type: [string, "null"] }
+    created: { $ref: 'common.yaml#/Timestamp' }
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id]
+  additionalProperties: false
+BlogPostCollection:
+  type: object
+  title: Blog post collection
+  properties:
+    post:
+      type: array
+      items: { $ref: '#/BlogPost' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+MediaAlbumWritable:
+  type: object
+  title: Media album (writable fields)
+  properties:
+    title: { type: string, description: Required. }
+    description: { type: string }
+    setting_comments: { $ref: 'common.yaml#/BinaryFlag' }
+    setting_member_post: { $ref: 'common.yaml#/BinaryFlag', description: Non-admins can add content. }
+    published: { $ref: 'common.yaml#/BinaryFlag' }
+  additionalProperties: false
+MediaAlbumCreate:
+  type: object
+  title: Media album create
+  allOf:
+    - $ref: '#/MediaAlbumWritable'
+    - type: object
+      required: [title]
+MediaAlbum:
+  type: object
+  title: Media album
+  description: A media album (images/audio/video) in groups or sections.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: string }
+    description: { type: [string, "null"] }
+    setting_comments: { $ref: 'common.yaml#/BinaryFlag' }
+    setting_member_post: { $ref: 'common.yaml#/BinaryFlag' }
+    published: { $ref: 'common.yaml#/BinaryFlag' }
+    photo_count: { type: [integer, string] }
+    video_count: { type: [integer, string] }
+    audio_count: { type: [integer, string] }
+    cover_image_url: { type: [string, "null"], format: uri }
+    created: { $ref: 'common.yaml#/Timestamp' }
+    available: { $ref: 'common.yaml#/BinaryFlag' }
+    completed: { $ref: 'common.yaml#/BinaryFlag' }
+    completion_status: { type: [string, "null"] }
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id]
+  additionalProperties: false
+MediaAlbumCollection:
+  type: object
+  title: Media album collection
+  properties:
+    album:
+      type: array
+      items: { $ref: '#/MediaAlbum' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+MediaContentWritable:
+  type: object
+  title: Media content create
+  description: Body of `POST {realm}/albums/{id}/content` — uploaded file ids plus optional per-file extras.
+  properties:
+    file-attachment:
+      type: object
+      properties:
+        id: { type: array, items: { type: [integer, string] } }
+      additionalProperties: false
+    extras:
+      type: array
+      description: Per-file caption/order keyed by uploaded file id (`fid`).
+      items:
+        type: object
+        properties:
+          fid: { $ref: 'common.yaml#/SchoologyId' }
+          caption: { type: string }
+          display_order: { type: [integer, string] }
+        additionalProperties: false
+  additionalProperties: false
+MediaContent:
+  type: object
+  title: Media album content
+  description: One item inside a media album.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    album_id: { $ref: 'common.yaml#/SchoologyId' }
+    type: { type: [string, "null"], description: "`image`, `video`, `audio`." }
+    caption: { type: [string, "null"] }
+    display_order: { type: [integer, string, "null"] }
+    created: { $ref: 'common.yaml#/Timestamp' }
+    album_cover: { $ref: 'common.yaml#/BinaryFlag' }
+    content_url: { type: [string, "null"], format: uri }
+    content_filesize: { type: [integer, string, "null"] }
+    content_md5_checksum: { type: [string, "null"] }
+    content_dimensions: { type: [string, "null"], description: "`WxH`." }
+    thumbnail_url: { type: [string, "null"], format: uri }
+    thumbnail_dimensions: { type: [string, "null"] }
+    converted_url: { type: [string, "null"], format: uri }
+    converted_filesize: { type: [integer, string, "null"] }
+    converted_md5_checksum: { type: [string, "null"] }
+  required: [id]
+  additionalProperties: false
+MediaContentCollection:
+  type: object
+  title: Media content collection
+  properties:
+    content:
+      type: array
+      items: { $ref: '#/MediaContent' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+ScormPackage:
+  type: object
+  title: SCORM package
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: [string, "null"] }
+    url: { type: [string, "null"], format: uri, description: Launch URL. }
+    num_attempts: { type: [integer, string] }
+    scorm_grading_enabled: { $ref: 'common.yaml#/BinaryFlag' }
+    sco_grading_enabled: { $ref: 'common.yaml#/BinaryFlag' }
+    grade_timing_type: { type: [integer, string], description: "`1` SCORM completion, `2` SCO completion first, `3` SCO completion last." }
+    grade_timing_option: { type: [integer, string], description: "`1` score, `2` completion, `3` satisfaction." }
+    available: { $ref: 'common.yaml#/BinaryFlag' }
+    completed: { $ref: 'common.yaml#/BinaryFlag' }
+    completion_status: { type: [string, "null"] }
+    count_in_grade: { $ref: 'common.yaml#/BinaryFlag' }
+  required: [id]
+  additionalProperties: false
+ScormPackageCollection:
+  type: object
+  title: SCORM package collection
+  properties:
+    package:
+      type: array
+      items: { $ref: '#/ScormPackage' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+WebContentPackage:
+  type: object
+  title: Web content package
+  description: A zipped website uploaded to a section.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: [string, "null"] }
+    uid: { $ref: 'common.yaml#/NullableSchoologyId', description: Creator user id. }
+    url: { type: [string, "null"], format: uri, description: View/launch URL. }
+  required: [id]
+  additionalProperties: false
+WebContentPackageCollection:
+  type: object
+  title: Web content package collection
+  properties:
+    web:
+      type: array
+      items: { $ref: '#/WebContentPackage' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false

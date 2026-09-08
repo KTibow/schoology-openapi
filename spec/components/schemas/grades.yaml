@@ -1,0 +1,285 @@
+GradeEntry:
+  type: object
+  title: Grade entry
+  description: >
+    A grade for one (enrollment, grade item) pair. `grade` accepts letter
+    grades when the assignment has a grading scale. `exception` `1` = excused,
+    `2` = incomplete (then `grade` is null).
+  properties:
+    enrollment_id: { $ref: 'common.yaml#/SchoologyId' }
+    assignment_id: { $ref: 'common.yaml#/SchoologyId' }
+    section_id: { $ref: 'common.yaml#/SchoologyId' }
+    grade: { type: [number, string, "null"] }
+    exception: { type: [integer, string, "null"], description: "`1` excused, `2` incomplete." }
+    comment: { type: [string, "null"] }
+    comment_status: { type: [integer, string, "null"], description: Whether the comment is visible to the student (admins only on read). }
+    timestamp: { $ref: 'common.yaml#/Timestamp' }
+    is_final: { $ref: 'common.yaml#/BinaryFlag' }
+    type: { type: [string, "null"], description: "`assignment`, `discussion`, …" }
+    location: { type: [string, "null"], format: uri, description: API URL of the graded content. }
+    max_points: { type: [integer, number, string, "null"] }
+    scale_id: { $ref: 'common.yaml#/NullableSchoologyId' }
+    scale_type: { type: [integer, string, "null"] }
+    category_id: { $ref: 'common.yaml#/NullableSchoologyId' }
+    override: { type: [string, "null"], description: Manual grade override marker. }
+    calculated_grade: { type: [number, string, "null"] }
+    pending: { type: [integer, string, "null"] }
+    assignment_type: { type: [string, "null"], description: Undocumented; appears on user-grade rows. }
+    web_url: { type: [string, "null"], format: uri, description: Undocumented; appears on user-grade rows. }
+  additionalProperties: false
+GradesInput:
+  type: object
+  title: Grades input
+  description: Body of `PUT /sections/{id}/grades` (wrapped in `grades.grade`).
+  properties:
+    grades:
+      type: object
+      properties:
+        grade:
+          type: array
+          items:
+            type: object
+            description: One grade write. Requires `type`, `assignment_id`, `enrollment_id`.
+            required: [type, assignment_id, enrollment_id]
+            properties:
+              type: { type: string, description: "`assignment`, `discussion`, …" }
+              assignment_id: { $ref: 'common.yaml#/SchoologyId' }
+              enrollment_id: { $ref: 'common.yaml#/SchoologyId' }
+              grade: { type: [number, string, "null"] }
+              comment: { type: string }
+              exception: { type: [integer, string] }
+              comment_status: { $ref: 'common.yaml#/BinaryFlag' }
+            additionalProperties: false
+      additionalProperties: false
+  additionalProperties: false
+FinalCommentsInput:
+  type: object
+  title: Final comments input
+  description: Body of `PUT /sections/{id}/grades` for period/final-grade comments.
+  properties:
+    final_comments:
+      type: object
+      properties:
+        final_comment:
+          type: array
+          items:
+            type: object
+            required: [enrollment_id, period_id, comment]
+            properties:
+              enrollment_id: { $ref: 'common.yaml#/SchoologyId' }
+              period_id: { $ref: 'common.yaml#/SchoologyId', description: 'Grading period ID, or the literal `final` for the course final grade.' }
+              comment: { type: string }
+              comment_status: { $ref: 'common.yaml#/BinaryFlag', description: Visible to the student; default `0`. }
+            additionalProperties: false
+      additionalProperties: false
+  additionalProperties: false
+PeriodGrade:
+  type: object
+  description: Per-period grade/comment for one enrollment (section grades response).
+  properties:
+    period_id: { type: string, description: "`p{grading_period_id}`, `other`, or `final`." }
+    grade: { type: [number, string, "null"] }
+    comment: { type: [string, "null"] }
+    comment_status: { type: [integer, string, "null"] }
+  additionalProperties: false
+FinalGrade:
+  type: object
+  description: Final/period grades for one enrollment (section grades response).
+  properties:
+    enrollment_id: { $ref: 'common.yaml#/SchoologyId' }
+    period: { type: array, items: { $ref: '#/PeriodGrade' } }
+    scale_id: { $ref: 'common.yaml#/NullableSchoologyId' }
+  additionalProperties: false
+SectionGrades:
+  type: object
+  title: Section grades
+  description: Response of `GET /sections/{id}/grades` (admin/teacher only).
+  properties:
+    grades:
+      type: [object, "null"]
+      properties:
+        grade: { type: array, items: { $ref: '#/GradeEntry' } }
+      additionalProperties: false
+    period:
+      type: [array, "null"]
+      description: The section's grading periods with weights.
+      items:
+        type: object
+        properties:
+          period_id: { $ref: 'common.yaml#/SchoologyId', examples: [p13011] }
+          period_title: { type: [string, "null"] }
+          weight: { type: [integer, string, "null"] }
+        additionalProperties: false
+    final_grade:
+      type: [array, "null"]
+      items: { $ref: '#/FinalGrade' }
+  additionalProperties: false
+UserGradesPeriod:
+  type: object
+  description: A grading period inside a section of the user grade listing.
+  properties:
+    period_id: { $ref: 'common.yaml#/SchoologyId' }
+    period_title: { type: [string, "null"] }
+    assignment: { type: [array, "null"], items: { $ref: '#/GradeEntry' } }
+  additionalProperties: false
+UserGradesFinalGrade:
+  type: object
+  description: Final grade block for a period, with per-category grades.
+  properties:
+    period_id: { $ref: 'common.yaml#/SchoologyId' }
+    grade: { type: [number, string, "null"] }
+    weight: { type: [integer, number, string, "null"] }
+    comment: { type: [string, "null"] }
+    scale_id: { $ref: 'common.yaml#/NullableSchoologyId' }
+    grading_category:
+      type: [array, "null"]
+      items:
+        type: object
+        properties:
+          category_id: { $ref: 'common.yaml#/SchoologyId' }
+          grade: { type: [number, string, "null"] }
+        additionalProperties: false
+    comment_status: { type: [integer, string, "null"] }
+  additionalProperties: false
+UserGradesSection:
+  type: object
+  description: A section block of the user grade listing.
+  properties:
+    section_id: { $ref: 'common.yaml#/SchoologyId' }
+    period: { type: [array, "null"], items: { $ref: '#/UserGradesPeriod' } }
+    final_grade: { type: [array, "null"], items: { $ref: '#/UserGradesFinalGrade' } }
+    grading_category:
+      type: [array, "null"]
+      description: The section's grading categories.
+      items:
+        type: object
+        properties:
+          id: { $ref: 'common.yaml#/SchoologyId' }
+          title: { type: [string, "null"] }
+        additionalProperties: false
+  additionalProperties: false
+UserGrades:
+  type: object
+  title: User grades
+  description: >
+    Response of `GET /users/{id}/grades` — grades grouped by section. A user
+    can read their own grades here; reading someone else's needs permission
+    over that user. With `timestamp` or `include_all_enrollments`, output is
+    paginated by enrollment and `links.next` appears.
+  properties:
+    section: { type: [array, "null"], items: { $ref: '#/UserGradesSection' } }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+AttendanceWritable:
+  type: object
+  title: Attendance entry (writable)
+  description: Row of the `attendances.attendance` array in the PUT body.
+  required: [enrollment_id, date, status]
+  properties:
+    enrollment_id: { $ref: 'common.yaml#/SchoologyId' }
+    date: { type: string, description: "`YYYY-MM-DD`." }
+    status: { type: [integer, string], enum: [1, 2, 3, 4, "1", "2", "3", "4"], description: "`1` present, `2` absent, `3` late, `4` excused." }
+    comment: { type: string }
+  additionalProperties: false
+AttendanceInput:
+  type: object
+  title: Attendance input
+  properties:
+    attendances:
+      type: object
+      properties:
+        attendance:
+          type: array
+          items: { $ref: '#/AttendanceWritable' }
+      additionalProperties: false
+  additionalProperties: false
+AttendanceEntry:
+  type: object
+  title: Attendance entry
+  properties:
+    enrollment_id: { $ref: 'common.yaml#/SchoologyId' }
+    date: { type: [string, "null"], description: "`YYYY-MM-DD`." }
+    status: { type: [integer, string] }
+    comment: { type: [string, "null"] }
+  additionalProperties: false
+AttendanceDate:
+  type: object
+  description: Date grouping inside the attendance listing.
+  properties:
+    date: { type: [string, "null"] }
+    statuses:
+      type: [object, "null"]
+      properties:
+        status:
+          type: array
+          items:
+            type: object
+            properties:
+              status_code: { type: [integer, string], description: The attendance status (absent records only — "present" is implied). }
+              attendances:
+                type: [object, "null"]
+                properties:
+                  attendance: { type: [array, "null"], items: { $ref: '#/AttendanceEntry' } }
+                additionalProperties: false
+            additionalProperties: false
+      additionalProperties: false
+  additionalProperties: false
+Attendance:
+  type: object
+  title: Attendance listing
+  description: >
+    Response of `GET /sections/{id}/attendance` (admin/teacher only). Records
+    for *present* are generally omitted: if a day has records, assume all
+    other enrollments were present. Returns `410 Gone`
+    when the district uses the PowerSchool SIS Attendance App.
+  properties:
+    date: { type: [array, "null"], items: { $ref: '#/AttendanceDate' } }
+    totals:
+      type: [object, "null"]
+      properties:
+        total:
+          type: [array, "null"]
+          items:
+            type: object
+            properties:
+              status: { type: [integer, string] }
+              count: { type: [integer, string] }
+            additionalProperties: false
+      additionalProperties: false
+  additionalProperties: false
+AttendanceBulkResult:
+  type: object
+  title: Attendance bulk result
+  properties:
+    attendance:
+      type: array
+      items:
+        type: object
+        properties:
+          id: { $ref: 'common.yaml#/SchoologyId' }
+          response_code: { type: [integer, string] }
+        additionalProperties: false
+  additionalProperties: false
+Completion:
+  type: object
+  title: Completion
+  description: >
+    Progress of a user through a section's completion rules. A student can read
+    their own via `/completion/user/...`.
+  properties:
+    uid: { $ref: 'common.yaml#/SchoologyId' }
+    total_rules: { type: [integer, string] }
+    completed_rules: { type: [integer, string] }
+    percent_complete: { type: [number, integer, string] }
+    completed: { $ref: 'common.yaml#/BinaryFlag' }
+  additionalProperties: false
+CompletionCollection:
+  type: object
+  title: Completion collection
+  properties:
+    completion:
+      type: array
+      items: { $ref: '#/Completion' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false

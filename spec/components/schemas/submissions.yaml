@@ -1,0 +1,26 @@
+SubmissionRevision:
+  type: object
+  title: Submission revision
+  description: >
+    One revision of a student's submission for a grade item. Submissions are
+    uniquely identified by section id + grade item id + user id + revision id.
+  properties:
+    revision_id: { $ref: 'common.yaml#/SchoologyId' }
+    uid: { $ref: 'common.yaml#/SchoologyId', description: Submitting user. }
+    created: { $ref: 'common.yaml#/Timestamp', description: Unix timestamp. }
+    late: { $ref: 'common.yaml#/BinaryFlag' }
+    num_items: { type: [integer, string], description: Attached items in this revision. }
+    draft: { $ref: 'common.yaml#/BinaryFlag', description: Only one active draft per user is allowed. }
+    body: { type: string, description: Text/HTML content — sent to `.../create`. }
+    attachments: { $ref: 'common.yaml#/Attachment' }
+  additionalProperties: false
+SubmissionCollection:
+  type: object
+  title: Submissions
+  properties:
+    revision:
+      type: array
+      items: { $ref: '#/SubmissionRevision' }
+    total: { type: [integer, string] }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false

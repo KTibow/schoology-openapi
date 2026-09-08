@@ -1,0 +1,19 @@
+# Standard OpenAPI structural rules; project-specific strictness lives in
+# scripts/lint_spec.py (see package.json scripts).
+extends: [[spectral:oas, all]]
+rules:
+  # Shared realm-generic operations reference one summary; descriptions are
+  # added only where they carry information beyond the summary.
+  operation-description: off
+  # Tags are ordered to match x-tagGroups (people & realms, course materials,
+  # grades & work, platform), which is how renderers lay out the sidebar.
+  # Alphabetical order would scatter the material tags across the list.
+  openapi-tags-alphabetical: off
+  # `contact-properties` demands name + url + email. There is no email address
+  # that belongs in this document: this is an unofficial description, so the
+  # address cannot be Schoology's, and a maintainer's personal address in a
+  # published spec is a mailto: harvested off a static page. The url is a
+  # GitHub issue tracker, which is the thing a reader actually wants when the
+  # spec is wrong. Satisfying this rule is what put a made-up address here
+  # before -- an invented contact is worse than an absent one.
+  contact-properties: off

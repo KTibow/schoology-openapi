@@ -1,0 +1,220 @@
+SectionsCollection:
+  get:
+    tags: [Sections]
+    summary: Look up sections by school code
+    description: |
+      Look up sections by a comma-separated list of `section_school_codes`
+      (up to 50) — typically SIS IDs. `include_past=1` includes sections from
+      expired grading periods.
+
+    operationId: listSectionsBySchoolCode
+    x-student-access: ok
+    parameters:
+      - name: section_school_codes
+        in: query
+        required: true
+        description: Comma-separated section school codes (up to 50).
+        schema: { type: string }
+      - name: include_past
+        description: Include sections from expired grading periods.
+        in: query
+        schema: { type: string, enum: ["1"] }
+    responses:
+      '200':
+        description: Matching sections.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/SectionCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  post:
+    tags: [Sections]
+    summary: Create sections (bulk, admin)
+    description: |
+      Create multiple sections at once (up to 50, wrapped in
+      `{"sections": {"section": [...]}}`). `update_existing=1` updates existing
+      sections matched by `section_code` + `grading_periods`.
+    operationId: createSectionsBulk
+    x-student-access: unknown
+    parameters:
+      - name: update_existing
+        in: query
+        description: Update existing records matched by their unique code instead of failing on conflicts.
+        schema: { type: string, enum: ["1"] }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/SectionsBulkInput' }
+    responses:
+      '201':
+        description: Per-section results.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                section: { type: array, items: { $ref: '../components/schemas/_index.yaml#/SectionBulkResult' } }
+              additionalProperties: false
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  put:
+    tags: [Sections]
+    summary: Update sections (bulk, admin)
+    description: Modify multiple sections (up to 50) — each object must include `id`.
+    operationId: updateSectionsBulk
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/SectionsBulkInput' }
+    responses:
+      '200':
+        description: Per-section results.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                section: { type: array, items: { $ref: '../components/schemas/_index.yaml#/SectionBulkResult' } }
+              additionalProperties: false
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  delete:
+    tags: [Sections]
+    summary: Delete sections (bulk, admin)
+    description: Delete up to 50 sections (cannot be undone). IDs go in the `section_ids` query parameter.
+    operationId: deleteSectionsBulk
+    x-student-access: unknown
+    parameters:
+      - name: section_ids
+        in: query
+        required: true
+        description: Comma-separated section IDs.
+        schema: { type: string }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+SectionsCopy:
+  post:
+    tags: [Sections]
+    summary: Copy section content (admin)
+    description: |
+      Schedule copying of existing sections and their content into new or
+      existing empty sections, as an asynchronous background job. Wrapped in
+      `{"sections": {"section": [...]}}`. `enroll_user=1` enrolls the calling
+      user into the copied section.
+    operationId: copySections
+    x-student-access: unknown
+    parameters:
+      - name: enroll_user
+        description: Set to `1` to enroll the calling user into the newly copied section.
+        in: query
+        schema: { type: string, enum: ["1"] }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              sections:
+                type: object
+                properties:
+                  section:
+                    type: array
+                    items: { $ref: '../components/schemas/_index.yaml#/SectionCopyInput' }
+                additionalProperties: false
+            additionalProperties: false
+    responses:
+      '200':
+        description: Per-section copy results (async; see `transfer_url`).
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                section: { type: array, items: { $ref: '../components/schemas/_index.yaml#/SectionBulkResult' } }
+              additionalProperties: false
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+SectionsExt:
+  get:
+    tags: [Sections]
+    summary: Get a section by external (school) code
+    description: >
+      Look up a section by its `section_school_code` (e.g. SIS ID).
+
+    operationId: getSectionByExtId
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/ext_id'
+    responses:
+      '200':
+        description: The section.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Section' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+SectionItem:
+  get:
+    tags: [Sections]
+    summary: Get a section
+    description: View a specified course section.
+    operationId: getSection
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/picture_size'
+    responses:
+      '200':
+        description: A section.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Section' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Sections]
+    summary: Update a section (admin)
+    description: Modify a section. Note `section_school_code`/`grading_periods` are locked when `synced=1`.
+    operationId: updateSection
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/SectionWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Sections]
+    summary: Delete a section (admin)
+    description: Delete a section (cannot be undone).
+    operationId: deleteSection
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }

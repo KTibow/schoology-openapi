@@ -1,0 +1,112 @@
+EnrollmentWritable:
+  type: object
+  title: Enrollment (writable fields)
+  description: Fields accepted by POST/PUT on enrollment endpoints. Realm-specific id fields (`section_id`/`group_id`, `course_code`/`section_code`/`section_school_code`, `school_uid`) apply to the bulk/import variants.
+  properties:
+    uid: { $ref: 'common.yaml#/SchoologyId', description: "Required. Schoology user ID." }
+    admin: { $ref: 'common.yaml#/BinaryFlag', description: "Required. `1` admin (teacher), `0` member (student)." }
+    status: { type: [integer, string], enum: [1, 2, 3, 4, 5, "1", "2", "3", "4", "5"], description: "Required. `1` active, `2` expired, `3` invite pending, `4` request pending, `5` archived." }
+    id: { $ref: 'common.yaml#/SchoologyId', description: "Bulk updates identify the enrollment by `id`." }
+    realm: { type: string, enum: [section, group], description: Multi-realm bulk input. }
+    section_id: { $ref: 'common.yaml#/SchoologyId', description: Multi-realm bulk input — target section. }
+    group_id: { $ref: 'common.yaml#/SchoologyId', description: Multi-realm bulk input — target group. }
+    course_code: { type: string, description: Import by course code (needs `grading_period_id` in path). }
+    section_code: { type: string, description: Import by section code. }
+    section_school_code: { type: string, description: Import by section school code (`POST /enrollments/import/course`). }
+    school_uid: { type: string, description: Import endpoints — the user's school_uid. }
+    delete: { $ref: 'common.yaml#/BinaryFlag', description: Import endpoints — remove the enrollment instead of upserting. }
+  additionalProperties: false
+EnrollmentCreate:
+  type: object
+  title: Enrollment create
+  allOf:
+    - $ref: '#/EnrollmentWritable'
+    - type: object
+      required: [uid, admin, status]
+Enrollment:
+  type: object
+  title: Enrollment
+  description: >
+    Association between a user and a realm (course section or group). Read
+    responses embed denormalized user fields.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    uid: { $ref: 'common.yaml#/SchoologyId' }
+    admin: { $ref: 'common.yaml#/BinaryFlag' }
+    status: { type: [integer, string], enum: [1, 2, 3, 4, 5, "1", "2", "3", "4", "5"] }
+    school_uid: { type: [string, "null"] }
+    name_title: { type: [string, "null"] }
+    name_title_show: { type: [integer, string, "null"] }
+    name_first: { type: [string, "null"] }
+    name_first_preferred: { type: [string, "null"] }
+    name_middle: { type: [string, "null"] }
+    name_middle_show: { type: [integer, string, "null"] }
+    name_last: { type: [string, "null"] }
+    name_display: { type: [string, "null"] }
+    picture_url: { type: [string, "null"], format: uri }
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id]
+  additionalProperties: false
+EnrollmentCollection:
+  type: object
+  title: Enrollment collection
+  properties:
+    enrollment:
+      type: array
+      items: { $ref: '#/Enrollment' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+EnrollmentsBulkInput:
+  type: object
+  title: Enrollments bulk input
+  properties:
+    enrollments:
+      type: object
+      properties:
+        enrollment:
+          type: array
+          items: { $ref: '#/EnrollmentCreate' }
+      additionalProperties: false
+  additionalProperties: false
+EnrollmentBulkResult:
+  type: object
+  title: Enrollment bulk result
+  description: Row of the bulk enrollment results (single-realm and multi-realm variants).
+  properties:
+    response_code: { type: [integer, string] }
+    location: { type: [string, "null"], format: uri }
+    id: { $ref: 'common.yaml#/NullableSchoologyId' }
+    uid: { $ref: 'common.yaml#/NullableSchoologyId' }
+    realm: { type: [string, "null"], enum: [section, group, "null"] }
+    realm_id: { $ref: 'common.yaml#/NullableSchoologyId' }
+    school_uid: { type: [string, "null"] }
+    course_code: { type: [string, "null"] }
+    section_code: { type: [string, "null"] }
+    section_school_code: { type: [string, "null"] }
+    error: { type: [string, "null"] }
+  additionalProperties: false
+Role:
+  type: object
+  title: Role
+  description: A role is a named bundle of permissions assigned to users.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: string, examples: [Teacher] }
+    faculty: { $ref: 'common.yaml#/BinaryFlag', description: Whether the role is a faculty role. }
+    role_type: { type: [integer, string], enum: [1, 2, "1", "2"], description: "`1` organization (district) role, `2` building (school override) role." }
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id, title]
+  additionalProperties: false
+Roles:
+  type: object
+  description: Response of `GET /roles`. Building-level overrides appear in `building_role`.
+  properties:
+    role:
+      type: array
+      items: { $ref: '#/Role' }
+    building_role:
+      type: [array, "null"]
+      description: Present when school override roles exist (`role_type` 2).
+      items: { $ref: '#/Role' }
+  additionalProperties: false

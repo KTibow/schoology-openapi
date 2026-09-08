@@ -1,0 +1,247 @@
+CollectionsCollection:
+  get:
+    tags: [Resources]
+    summary: List resource collections
+    description: >
+      List the signed-in user's resource collections, including the default
+      Home/Downloads collections and group/school realm collections.
+
+    operationId: listCollections
+    x-student-access: ok
+    x-verified: true
+    responses:
+      '200':
+        description: A collection listing.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/CollectionCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+  post:
+    tags: [Resources]
+    summary: Create a collection
+    operationId: createCollection
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/CollectionCreate' }
+    responses:
+      '201':
+        description: The created collection.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Collection' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+CollectionItem:
+  get:
+    tags: [Resources]
+    summary: Get a resource collection
+    operationId: getCollection
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/collection_id'
+    responses:
+      '200':
+        description: A collection.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Collection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Resources]
+    summary: Update a resource collection
+    operationId: updateCollection
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/collection_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/CollectionWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Resources]
+    summary: Delete a resource collection
+    description: Delete a collection (cannot be undone).
+    operationId: deleteCollection
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/collection_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+CollectionResources:
+  get:
+    tags: [Resources]
+    summary: List a collection's resources
+    description: >
+      List the resource templates in a collection. `f` selects a folder
+      (omit for the root); `with_attachments` includes attachments.
+    operationId: listCollectionResources
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/collection_id'
+      - name: f
+        in: query
+        description: Folder id within the collection.
+        schema: { type: string }
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+    responses:
+      '200':
+        description: A resource listing.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/ResourceCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  post:
+    tags: [Resources]
+    summary: Create a resource template
+    description: >
+      Create a template in the collection. Documents require an attachment
+      (the standard attachment array).
+    operationId: createCollectionResource
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/collection_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/ResourceWritable' }
+    responses:
+      '201':
+        description: The created template.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Resource' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+CollectionResourceItem:
+  get:
+    tags: [Resources]
+    summary: Get a resource template
+    operationId: getCollectionResource
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/collection_id'
+      - $ref: '../components/parameters/_index.yaml#/template_id'
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+    responses:
+      '200':
+        description: A resource template.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Resource' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Resources]
+    summary: Update a resource template
+    operationId: updateCollectionResource
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/collection_id'
+      - $ref: '../components/parameters/_index.yaml#/template_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/ResourceWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Resources]
+    summary: Delete a resource template
+    description: Delete a template (cannot be undone).
+    operationId: deleteCollectionResource
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/collection_id'
+      - $ref: '../components/parameters/_index.yaml#/template_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+RealmResources:
+  parameters:
+    - name: realm
+      in: path
+      required: true
+      description: >
+        Realm collection that owns the resource collection.
+      schema:
+        type: string
+        enum: [groups, schools]
+  get:
+    tags: [Resources]
+    summary: List a realm's resources
+    description: >
+      Realm resource collections exist for groups and schools. `f` selects a
+      folder; `with_attachments` includes attachments.
+    operationId: listRealmResources
+    x-student-access: ok
+    x-verified: true
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+      - name: f
+        in: query
+        description: Folder id within the collection.
+        schema: { type: string }
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+    responses:
+      '200':
+        description: A resource listing.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/ResourceCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  post:
+    tags: [Resources]
+    summary: Create a resource template in a realm
+    description: Create a template in the realm's collection (groups and schools).
+    operationId: createRealmResource
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/realm_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/ResourceWritable' }
+    responses:
+      '201':
+        description: The created template.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Resource' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }

@@ -1,0 +1,329 @@
+openapi: 3.1.0
+info:
+  title: Schoology REST API
+  version: 1.0.0
+  summary: Unofficial OpenAPI description of the Schoology (PowerSchool Learning) REST API
+  description: |
+    An OpenAPI description of the **Schoology REST API**
+    (`https://api.schoology.com/v1/`), reconstructed from the official
+    [Schoology developer documentation](https://developers.schoology.com/api/)
+    and validated against a live account.
+
+    Detail lives with the thing it describes: how to sign a request is on the
+    `oauth1` security scheme, query parameters carry their own rules, and each
+    tag says what its endpoints are for. Three things are document-wide, so
+    they are here.
+
+    ## Realm-generic paths
+
+    Material endpoints appear once, at `/{realm}/{realm_id}/…`, instead of
+    being repeated per realm. Each one's `realm` parameter carries an `enum` of
+    exactly the realms that material supports, and that list is exhaustive:
+    `documents` accepts only `sections` and `schools`, while
+    `events` also takes `groups`, `users` and `districts`. Pages exist only in
+    sections and keep a literal `/sections/…` path.
+
+    What a realm *is* — and why a course is not one you can hang material on —
+    is on the **Courses** and **Sections** tags.
+
+    ## Access annotations
+
+    Operations carry vendor extensions recorded against a live **student**
+    account — an ordinary enrolled user, not an admin:
+
+    - `x-student-access: ok | forbidden | unknown` — what actually happened
+      when the request was made. `ok` is a 2xx or 3xx, `forbidden` is `403`.
+      **`unknown` is not a prediction**: it means nobody has tried, so it is
+      neither permission nor refusal — assume nothing and handle `403`. It
+      covers every non-GET operation, since establishing whether a student may
+      POST, PUT or DELETE would mean writing to a real school's data. No value
+      here is guessed from an endpoint's name or from what the docs imply.
+    - `x-student-access-by-realm` — on realm-generic operations whose answer
+      depends on which realm you address.
+    - `x-verified: true` — this operation's response schema has been checked
+      against a real response, rather than transcribed from documentation. Its
+      absence is not a warning, only a smaller claim: most operations have no
+      stored response to check against.
+
+    Endpoints a student cannot reach repeat that as a callout in their own
+    description, since it decides whether you can call them at all. The rest
+    you read from the document:
+
+    ```sh
+    jq -r '.paths | to_entries[] | .key as $p | .value | to_entries[]
+           | select(.key | IN("get","post","put","delete","patch"))
+           | "\(.value["x-student-access"])\t\(.key|ascii_upcase)\t\($p)"' openapi.json
+    ```
+
+    ## Response shapes
+
+    Collections come back wrapped in a singular key (`user`, `course`,
+    `section`, `assignment`, …) beside sibling `total` and `links` fields. The
+    API serves both JSON and XML via `Accept`/`Content-Type`; only JSON is
+    modelled here.
+  contact:
+    # This is an unofficial description; `contact` is where a reader goes when
+    # the spec is wrong, which is this repo's issue tracker, not Schoology
+    # support. Schoology's own documentation is linked from `externalDocs`.
+    name: schoology-openapi issues
+    url: https://github.com/KTibow/schoology-openapi/issues
+  license:
+    name: MIT
+    url: https://github.com/KTibow/schoology-openapi/blob/main/LICENSE
+servers:
+  - url: https://api.schoology.com/v1
+    description: Schoology API
+security:
+  - oauth1: []
+tags:
+  # People & realms
+  - name: Users
+    description: >
+      People. `GET /users/me` resolves whoever the token belongs to and is the
+      usual starting point — from there, `/users/{user_id}/sections` gets you to
+      their classes. Listing or modifying *other* users is an administrator's
+      job and answers `403` otherwise.
+  - name: Courses
+    description: |
+      A course is only a container, like "English 9". Nobody is enrolled in a
+      course and no material belongs to one — that all happens on its sections.
+      The official docs put it plainly: **"Courses are simply containers for
+      course sections. Objects cannot belong to courses; they can only belong
+      to course sections."**
+
+      So in practice you use these endpoints for one thing: getting from a
+      course to its sections. Reading a course directly is an administrator's
+      job — being enrolled grants nothing here, because enrollment happens on
+      the section.
+  - name: Sections
+    description: >
+      A section is one actual class — "English 9, 3rd period". This is where
+      everything real lives: students and teachers are enrolled in sections, and
+      assignments, discussions, documents, events, pages and grades all belong to
+      one. Nearly every useful request starts with a section id, and the way to
+      get yours is `GET /users/{user_id}/sections`. The endpoints here also let
+      you look a section up by the codes a school information system knows it by,
+      rather than by Schoology's own id. In SIS-synced schools (PowerSchool
+      provisioning, say) each "course" often maps to a single course-section
+      pairing with UUID-shaped `course_code`/`section_school_code` values, and
+      a section marked `synced: 1` locks those fields against editing.
+  - name: Groups
+    description: >
+      A group is a non-academic space — a club, a team, a staff room. Groups hold
+      materials and enrollments much as sections do, so most content endpoints
+      accept a group id wherever they accept a section id.
+  - name: Schools
+    description: >
+      A school, and the buildings (campuses) under it. Every user and course
+      belongs to a building; most accounts can read their own school and little
+      else.
+  - name: Enrollments
+    description: >
+      An enrollment joins one person to one section or group, and records whether
+      they are a member or run the place (`admin`) and whether the enrollment is
+      active (`status`). This is what "being in a class" means to the API.
+      Enrollments cover sections *and* groups, but the `/enrollments/import`
+      endpoints are course-section specific.
+  - name: Roles
+    description: >
+      Named bundles of permissions — Student, Teacher, Parent, and whatever else
+      a district has defined. A user's `role_id` points at one of these.
+
+  # Course materials
+  - name: Assignments
+    description: >
+      Coursework, and the gradebook entry each piece creates. `grade_items` is a
+      read-only view over everything gradeable in a section at once — assignments,
+      graded discussions and assessments — which is usually what you want when
+      building a grade list.
+  - name: Discussions
+    description: >
+      Threads and their replies, in sections, groups, schools and districts.
+      A discussion in a section can be graded — set `graded: 1` and it grows
+      the same gradebook fields as an assignment and shows up under
+      `grade_items`. `require_initial_post` hides other people's replies until
+      the reader has posted their own. Replies nest through `parent_id`, where
+      `0` means replying to the thread itself.
+  - name: Documents
+    description: >
+      Standalone file, link and embed materials, in sections and schools only —
+      groups have no documents because the website routes group files through
+      Resources instead. A document must have exactly one attachment, so every
+      response carries an `attachments` block whether or not you asked for one
+      and `with_attachments` changes nothing here. Create with either `url` or
+      `file-attachment`; send both and the file wins.
+  - name: Events
+    description: >
+      Calendar events, in sections, groups, users, schools and districts.
+      Filter a listing by date with `start_date` and `end_date` together.
+      Assignment and discussion due dates also surface here as events whose
+      `type` says which they are — those are read-only, and cannot be edited or
+      deleted through this tag; change the assignment instead.
+  - name: Updates
+    description: >
+      Short posts in a user, group or section feed, plus their comments. Polls
+      live on updates rather than having endpoints of their own: request
+      `with_attachments` and a poll update comes back with its options and vote
+      counts, which you then vote on under Likes & polls. `GET /recent`
+      aggregates every realm the signed-in user belongs to into one feed.
+  - name: Blog posts
+    description: >
+      Blog posts and their comments. Nominally available in all five realms
+      (sections, groups, users, schools, districts), but blogs are a
+      per-realm feature that is often switched off — expect `403` from realms
+      where nobody has enabled them.
+  - name: Media albums
+    description: >
+      Photo/video/audio albums in sections and groups, the items inside them,
+      and comments on individual items. Adding content is a two-step job: upload
+      the file under Files first, then post its id to the album's `content`
+      endpoint, optionally with per-file captions and ordering in `extras`.
+  - name: Pages
+    description: >
+      Rich-text pages. The one material that is not realm-generic — pages exist
+      only in sections, so these keep a literal `/sections/…` path. Listings
+      omit page bodies unless you ask with `withcontent=1`, and note the item
+      endpoint is singular (`/page/{id}`) where the collection is plural.
+  - name: Packages
+    description: >
+      SCORM packages and web content packages (a zipped site) in a section.
+      Read and delete only — there is no API to create one, because uploading a
+      package is a website operation. SCORM packages carry the grading settings
+      that decide how attempts turn into a score.
+  - name: Folders
+    description: >
+      The materials tree of a section or group — `folder/0` is the root, and
+      each entry carries a `location` pointing at the API endpoint that serves
+      it. Schoology's docs write this endpoint as
+      `courses/{course_id}/folder/{folder_id}`, but the id is a *section*
+      id: pass a real course id and you get `403`. The operation lists what
+      each combination returns.
+  - name: Likes & polls
+    description: >
+      Liking updates and comments, and voting in the polls attached to updates.
+      Both are toggles carrying the action in the body rather than the method:
+      `like_action` and `select` take `"true"` to add and `"false"` to remove.
+      Repeating an action you have already taken answers `400`.
+
+  # Grades & work
+  - name: Grading
+    description: >
+      How a section's gradebook is set up and what is in it: the terms grades are
+      filed under (grading periods), how assignments are weighted (categories),
+      how scores turn into letters (scales), rubrics, and the grades, attendance
+      and completion records themselves. Most of this is readable by the student
+      it belongs to and writable only by the teacher.
+  - name: Submissions
+    description: >
+      Dropbox submissions and their comments, keyed by section + grade item +
+      user. Each submission attempt is a *revision*; listings return only the
+      newest per user unless you pass `all_revisions`. Create one either from
+      uploaded files or from text/HTML, and note a user may hold only one
+      active draft — while a draft exists, creating a file revision is refused.
+
+  # Platform
+  - name: Messaging
+    description: >
+      Private messages and reminders. Messages are threaded: replying posts to
+      the thread's own id. Read a message at `/messages/inbox/{id}` — the bare
+      `/messages/{id}` is documented but answers `400` in practice. Reading
+      marks a thread read unless you pass `keep_unread`. Reminders are a
+      teacher's view of work needing attention (`ungraded`, `resubmitted`),
+      either across every section or one at a time.
+  - name: Resources
+    description: >
+      Reusable content, kept outside any course. Every user gets two default
+      collections (Home and Downloads); groups and schools get realm
+      collections, addressed through `/{realm}/{realm_id}/resources` rather
+      than by collection id. Items are *templates* — an assignment, page or
+      document not yet attached to a section — and folders within a collection
+      are selected with `f`.
+  - name: Files
+    description: >
+      The two-step upload every attachment goes through. `POST /upload` with a
+      filename, size and MD5 reserves an id and returns a one-time
+      `upload_location`; `PUT` the bytes there, with the real MIME type as
+      `Content-Type`. The second call answers `200` with the completed file
+      object rather than the usual `204`, and the location is locked afterwards
+      — size, checksum and requesting user must all match step one. The
+      resulting id is what you send as `file-attachment` elsewhere.
+  - name: Search
+    description: >
+      Cross-realm search over users, courses, groups and resources. A user's own
+      connections are under Users (`/users/{user_id}/network`).
+  - name: Event triggers
+    description: >
+      Webhook targets and the subscriptions binding them to Schoology's
+      event triggers. Admin-only (requires access to the Trigger UI).
+  - name: Utility
+    description: >
+      Cross-cutting endpoints: `multiget` and `multioptions` batch many calls
+      into one request. Worth knowing that `OPTIONS` works on every endpoint in
+      the API and reports the methods it allows, which is why `multioptions`
+      accepts any path while `multiget` is restricted to a fixed list.
+x-tagGroups:
+  - name: People & realms
+    tags: [Users, Courses, Sections, Groups, Schools, Enrollments, Roles]
+  - name: Course materials
+    tags:
+      - Assignments
+      - Discussions
+      - Documents
+      - Events
+      - Updates
+      - Blog posts
+      - Media albums
+      - Pages
+      - Packages
+      - Folders
+      - Likes & polls
+  - name: Grades & work
+    tags: [Grading, Submissions]
+  - name: Platform
+    tags: [Messaging, Resources, Files, Search, Event triggers, Utility]
+externalDocs:
+  url: https://developers.schoology.com/api/
+paths:
+  $ref: './paths/_index.yaml'
+components:
+  securitySchemes:
+    oauth1:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: |
+        Every request is signed with **OAuth 1.0a** (RFC 5849) in an
+        `Authorization` header:
+
+        ```
+        Authorization: OAuth realm="Schoology API",
+          oauth_consumer_key="YOUR_KEY",
+          oauth_token="",
+          oauth_nonce="unique-per-request",
+          oauth_timestamp="unix-time",
+          oauth_signature_method="PLAINTEXT",
+          oauth_version="1.0",
+          oauth_signature="CONSUMER_SECRET%26"
+        ```
+
+        - **Two-legged** (server-to-server): `oauth_token` is an empty string and
+          `oauth_signature` is just the URL-encoded consumer secret followed by
+          `%26` (an encoded `&`), e.g. `kd94hf93k423kf44%26`.
+        - **Three-legged** (acting as a user): sign with
+          `consumer_secret + "&" + token_secret` (PLAINTEXT) or HMAC-SHA1, and
+          pass the access token as `oauth_token`. Request and access tokens come
+          from `/oauth/request_token`, `/oauth/authorize` and
+          `/oauth/access_token`.
+        - `oauth_signature_method` may be `PLAINTEXT` (HTTPS only) or `HMAC-SHA1`.
+        - The nonce/timestamp pair must be unique per request — regenerate the
+          header before following any `303` redirect, which `/users/me` and
+          `/users/ext/{id}` both return.
+
+        Modelled as an `apiKey` header because OpenAPI 3.1 has no OAuth 1
+        security scheme, so a generated client will not sign for you.
+  parameters:
+    $ref: './components/parameters/_index.yaml'
+  responses:
+    $ref: './components/responses/_index.yaml'
+  schemas:
+    $ref: './components/schemas/_index.yaml'

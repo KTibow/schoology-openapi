@@ -1,0 +1,543 @@
+RealmEnrollments:
+  get:
+    tags: [Enrollments]
+    summary: List enrollments in a realm (admin/teacher)
+    description: |
+      View a paged list of enrollments in the given section or group. Filters
+      (each accepting comma-delimited lists): `uid`, `enrollment_status`,
+      `type`, `picture_size`.
+    operationId: listRealmEnrollments
+    x-student-access: forbidden
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/group_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - name: uid
+        in: query
+        description: Comma-delimited user ids to filter by.
+        schema: { type: string }
+      - name: enrollment_status
+        in: query
+        description: Comma-delimited status values (1–5).
+        schema: { type: string }
+      - name: type
+        in: query
+        description: Limit results to one kind (`user`, `group`, `course` for search; realm type for enrollments).
+        schema: { type: string }
+      - $ref: '../components/parameters/_index.yaml#/picture_size'
+    responses:
+      '200':
+        description: A paged collection of enrollments.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/EnrollmentCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  post:
+    tags: [Enrollments]
+    summary: Create enrollments (single or bulk)
+    description: >
+      Create an enrollment (`uid`, `admin`, `status`), or up to 50 at once
+      wrapped in `{"enrollments": {"enrollment": [...]}}`.
+    operationId: createRealmEnrollments
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/group_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '../components/schemas/_index.yaml#/EnrollmentCreate'
+              - $ref: '../components/schemas/_index.yaml#/EnrollmentsBulkInput'
+    responses:
+      '201':
+        description: The created enrollment, or per-item results.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '../components/schemas/_index.yaml#/Enrollment'
+                - $ref: '../components/schemas/_index.yaml#/EnrollmentsBulkInput'
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  put:
+    tags: [Enrollments]
+    summary: Update enrollments (bulk)
+    description: Modify multiple enrollments (up to 50) — each object must include `id`.
+    operationId: updateRealmEnrollmentsBulk
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/group_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/EnrollmentsBulkInput' }
+    responses:
+      '200':
+        description: Per-enrollment results.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enrollments:
+                  type: object
+                  properties:
+                    enrollment: { type: array, items: { $ref: '../components/schemas/_index.yaml#/EnrollmentBulkResult' } }
+                  additionalProperties: false
+              additionalProperties: false
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  delete:
+    tags: [Enrollments]
+    summary: Delete enrollments (bulk)
+    description: Delete up to 50 enrollments via the `enrollment_ids` query parameter (cannot be undone).
+    operationId: deleteRealmEnrollmentsBulk
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/group_id'
+      - name: enrollment_ids
+        in: query
+        required: true
+        description: Comma-separated enrollment IDs.
+        schema: { type: string }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+RealmEnrollmentItem:
+  get:
+    tags: [Enrollments]
+    summary: Get an enrollment
+    description: View a specified enrollment in the realm.
+    operationId: getRealmEnrollment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/group_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '200':
+        description: An enrollment.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Enrollment' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Enrollments]
+    summary: Update an enrollment
+    description: Modify an enrollment (e.g. change `status` or `admin`).
+    operationId: updateRealmEnrollment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/group_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/EnrollmentWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Enrollments]
+    summary: Delete an enrollment
+    description: Delete an enrollment (cannot be undone).
+    operationId: deleteRealmEnrollment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/group_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+RealmAccessCode:
+  post:
+    tags: [Enrollments]
+    summary: Enroll the token's user via access code
+    description: >
+      Enroll the signed-in user into the realm using an access code
+      (`{"access_code": "XXXXX-XXXXX"}`). Returns the created enrollment.
+    operationId: enrollByAccessCode
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/group_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [access_code]
+            properties:
+              access_code: { type: string }
+            additionalProperties: false
+    responses:
+      '201':
+        description: The created enrollment.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Enrollment' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+EnrollmentsMultiRealm:
+  post:
+    tags: [Enrollments]
+    summary: Create enrollments across realms (bulk)
+    description: >
+      Create up to 50 enrollments across multiple sections/groups. Each object
+      carries `realm` (`section` or `group`) plus `section_id` or `group_id`.
+      Supports `update_existing=1`.
+    operationId: createEnrollmentsMultiRealm
+    x-student-access: unknown
+    parameters:
+      - name: update_existing
+        in: query
+        description: Update existing records matched by their unique code instead of failing on conflicts.
+        schema: { type: string, enum: ["1"] }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/EnrollmentsBulkInput' }
+    responses:
+      '201':
+        description: Per-enrollment results (with `realm`/`realm_id`).
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enrollments:
+                  type: object
+                  properties:
+                    enrollment: { type: array, items: { $ref: '../components/schemas/_index.yaml#/EnrollmentBulkResult' } }
+                  additionalProperties: false
+              additionalProperties: false
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+  delete:
+    tags: [Enrollments]
+    summary: Delete enrollments (bulk)
+    description: >
+      Delete up to 50 enrollments in one call, passing their Schoology IDs as a
+      comma-separated `enrollment_ids` query parameter. Cannot be undone.
+    operationId: deleteEnrollments
+    x-student-access: unknown
+    parameters:
+      - name: enrollment_ids
+        in: query
+        required: true
+        description: Comma-separated enrollment IDs, up to 50.
+        schema: { type: string }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+EnrollmentsImportByPeriod:
+  post:
+    tags: [Enrollments]
+    summary: Import course enrollments by grading period
+    description: >
+      Create/update course enrollments by `grading_period_id` (in the path),
+      `course_code`, `section_code` and `school_uid` — no Schoology IDs needed.
+      Multiple grading period ids (comma-separated) apply across all sections
+      spanning them. Courses only (not groups).
+    operationId: importEnrollmentsByPeriod
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/grading_period_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/EnrollmentsBulkInput' }
+    responses:
+      '200':
+        description: Per-enrollment results with identifying codes.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enrollments:
+                  type: object
+                  properties:
+                    enrollment: { type: array, items: { $ref: '../components/schemas/_index.yaml#/EnrollmentBulkResult' } }
+                  additionalProperties: false
+              additionalProperties: false
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+EnrollmentsImportByCode:
+  post:
+    tags: [Enrollments]
+    summary: Import course enrollments by section school code
+    description: >
+      Like the grading-period import, but targets sections by unique
+      `section_school_code` + `school_uid` instead of grading period id.
+    operationId: importEnrollmentsByCode
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/EnrollmentsBulkInput' }
+    responses:
+      '200':
+        description: Per-enrollment results with identifying codes.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enrollments:
+                  type: object
+                  properties:
+                    enrollment: { type: array, items: { $ref: '../components/schemas/_index.yaml#/EnrollmentBulkResult' } }
+                  additionalProperties: false
+              additionalProperties: false
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+SectionEnrollments:
+  get:
+    tags: [Enrollments]
+    summary: List section enrollments (teacher)
+    description: |
+      View a paged list of enrollments in the given course section. Filters
+      (each accepting comma-delimited lists): `uid`, `enrollment_status`,
+      `type`, `picture_size`.
+    operationId: listSectionEnrollments
+    x-student-access: forbidden
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - name: uid
+        in: query
+        description: Comma-delimited user ids to filter by.
+        schema: { type: string }
+      - name: enrollment_status
+        in: query
+        description: Comma-delimited status values (1-5).
+        schema: { type: string }
+      - name: type
+        in: query
+        description: Limit results to one kind (`user`, `group`, `course` for search; realm type for enrollments).
+        schema: { type: string }
+      - $ref: '../components/parameters/_index.yaml#/picture_size'
+    responses:
+      '200':
+        description: A paged collection of enrollments.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/EnrollmentCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  post:
+    tags: [Enrollments]
+    summary: Create section enrollments (single or bulk)
+    description: >
+      Create an enrollment (`uid`, `admin`, `status`), or up to 50 at once
+      wrapped in `{"enrollments": {"enrollment": [...]}}`.
+    operationId: createSectionEnrollments
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '../components/schemas/_index.yaml#/EnrollmentCreate'
+              - $ref: '../components/schemas/_index.yaml#/EnrollmentsBulkInput'
+    responses:
+      '201':
+        description: The created enrollment, or per-item results.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '../components/schemas/_index.yaml#/Enrollment'
+                - $ref: '../components/schemas/_index.yaml#/EnrollmentsBulkInput'
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  put:
+    tags: [Enrollments]
+    summary: Update section enrollments (bulk)
+    description: Modify multiple enrollments (up to 50) — each object must include `id`.
+    operationId: updateSectionEnrollmentsBulk
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/EnrollmentsBulkInput' }
+    responses:
+      '200':
+        description: Per-enrollment results.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enrollments:
+                  type: object
+                  properties:
+                    enrollment: { type: array, items: { $ref: '../components/schemas/_index.yaml#/EnrollmentBulkResult' } }
+                  additionalProperties: false
+              additionalProperties: false
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+  delete:
+    tags: [Enrollments]
+    summary: Delete section enrollments (bulk)
+    description: Delete up to 50 enrollments via the `enrollment_ids` query parameter (cannot be undone).
+    operationId: deleteSectionEnrollmentsBulk
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - name: enrollment_ids
+        in: query
+        required: true
+        description: Comma-separated enrollment IDs.
+        schema: { type: string }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+SectionEnrollmentItem:
+  get:
+    tags: [Enrollments]
+    summary: Get a section enrollment
+    description: View a specified enrollment in the section.
+    operationId: getSectionEnrollment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '200':
+        description: An enrollment.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Enrollment' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  put:
+    tags: [Enrollments]
+    summary: Update a section enrollment
+    description: Modify an enrollment (e.g. change `status` or `admin`).
+    operationId: updateSectionEnrollment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/EnrollmentWritable' }
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Enrollments]
+    summary: Delete a section enrollment
+    description: Delete an enrollment (cannot be undone).
+    operationId: deleteSectionEnrollment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+SectionAccessCode:
+  post:
+    tags: [Enrollments]
+    summary: Enroll the token's user via section access code
+    description: >
+      Enroll the signed-in user into the section using an access code
+      (`{"access_code": "XXXXX-XXXXX"}`). Returns the created enrollment.
+    operationId: enrollBySectionAccessCode
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [access_code]
+            properties:
+              access_code: { type: string }
+            additionalProperties: false
+    responses:
+      '201':
+        description: The created enrollment.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Enrollment' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+CsvExportGroupEnrollments:
+  get:
+    tags: [Enrollments]
+    summary: Bulk group enrollment export (CSV, admin)
+    description: >
+      School-wide admins only. `fields` selects columns (uid, school_uid,
+      name_first, name_last, mail, title, group_code, type, status); omit for
+      all fields. Response is `text/csv`.
+    operationId: csvExportGroupEnrollments
+    x-student-access: forbidden
+    parameters:
+      - name: fields
+        description: Comma-separated column list to export (omit for all fields).
+        in: query
+        schema: { type: string }
+    responses:
+      '200':
+        description: CSV export.
+        content:
+          text/csv:
+            schema: { type: string }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }

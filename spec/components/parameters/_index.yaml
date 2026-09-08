@@ -1,0 +1,185 @@
+# Pagination & shared query parameters
+start:
+  name: start
+  in: query
+  description: >
+    Offset of the first record to return. Some collections accept `start_id`
+    instead, keying off the last id seen rather than an offset. Either way, a
+    response that has more pages carries the next one's URL in `links.next` —
+    following that is more reliable than incrementing `start` yourself.
+  schema: { type: integer, minimum: 0, default: 0 }
+limit:
+  name: limit
+  in: query
+  description: >
+    Number of records to return per page. Schoology caps this server-side and
+    the cap is not documented, so no `maximum` is asserted here — ask for what
+    you need and read `total`/`links.next` to see what you got.
+  schema: { type: integer, minimum: 1 }
+picture_size:
+  name: picture_size
+  in: query
+  description: >
+    Size of returned profile pictures: `big` (250px wide), `reg` (170px),
+    `sm` (50x46) or `tiny` (35x32).
+  schema: { type: string, enum: [big, reg, sm, tiny] }
+with_attachments:
+  name: with_attachments
+  in: query
+  description: >
+    Set to `1` (or `TRUE`) to include the `attachments` object (files, links,
+    videos, embeds) with each returned object.
+  schema: { type: string, enum: ["1", "TRUE"] }
+with_tags:
+  name: with_tags
+  in: query
+  description: Set to `1` to include the `tags` object (learning standards alignments).
+  schema: { type: string, enum: ["1"] }
+with_dropbox_stats:
+  name: with_dropbox_stats
+  in: query
+  description: >
+    Teachers only. Set to `TRUE` to include `dropbox_submissions` and
+    `dropbox_last_submission` snapshots on assignments.
+  schema: { type: string, enum: ["TRUE"] }
+id:
+  name: id
+  in: path
+  required: true
+  description: Schoology ID of the object.
+  schema: { type: string }
+course_id:
+  name: course_id
+  in: path
+  required: true
+  description: Schoology ID of the course.
+  schema: { type: string }
+section_id:
+  name: section_id
+  in: path
+  required: true
+  description: Schoology ID of the course section.
+  schema: { type: string }
+user_id:
+  name: user_id
+  in: path
+  required: true
+  description: Schoology user ID. For the token's own user you can usually use `/users/me` instead.
+  schema: { type: string }
+group_id:
+  name: group_id
+  in: path
+  required: true
+  description: Schoology ID of the group.
+  schema: { type: string }
+school_id:
+  name: school_id
+  in: path
+  required: true
+  description: Schoology ID of the school.
+  schema: { type: string }
+grading_period_id:
+  name: grading_period_id
+  in: path
+  required: true
+  description: Schoology ID of the grading period.
+  schema: { type: string }
+realm_id:
+  name: realm_id
+  in: path
+  required: true
+  description: Schoology ID of the realm (section, group, user, school or district).
+  schema: { type: string }
+ext_id:
+  name: id
+  in: path
+  required: true
+  description: >
+    External (unique) ID — the user's `school_uid` or the section's
+    `section_school_code` as configured for SIS sync.
+  schema: { type: string }
+update_id:
+  name: update_id
+  in: path
+  required: true
+  description: ID of the update (Edge post).
+  schema: { type: string }
+post_id:
+  name: post_id
+  in: path
+  required: true
+  description: ID of the discussion thread.
+  schema: { type: string }
+comment_id:
+  name: comment_id
+  in: path
+  required: true
+  description: ID of the comment.
+  schema: { type: string }
+assignment_id:
+  name: assignment_id
+  in: path
+  required: true
+  description: ID of the assignment (or grade item).
+  schema: { type: string }
+grade_item_id:
+  name: grade_item_id
+  in: path
+  required: true
+  description: ID of the grade item (assignment, discussion, …) the submission belongs to.
+  schema: { type: string }
+album_id:
+  name: album_id
+  in: path
+  required: true
+  description: ID of the media album.
+  schema: { type: string }
+content_id:
+  name: content_id
+  in: path
+  required: true
+  description: ID of the media album content item.
+  schema: { type: string }
+folder_id:
+  name: folder_id
+  in: path
+  required: true
+  description: >
+    ID of a folder in the realm's materials tree; `0` is the root. Despite the
+    name Schoology's docs use, the tree belongs to a section (or group), not to
+    a course — see the operation description.
+  schema: { type: string }
+revision_id:
+  name: revision_id
+  in: path
+  required: true
+  description: Submission revision ID.
+  schema: { type: string }
+message_id:
+  name: message_id
+  in: path
+  required: true
+  description: Message/thread ID.
+  schema: { type: string }
+collection_id:
+  name: collection_id
+  in: path
+  required: true
+  description: Resource collection ID.
+  schema: { type: string }
+template_id:
+  name: template_id
+  in: path
+  required: true
+  description: Resource template ID.
+  schema: { type: string }
+realm:
+  name: realm
+  in: path
+  required: true
+  description: >
+    Which kind of invite to act on. Only the two realms a user can be invited
+    into are accepted; anything else (`sent`, `received`, …) answers `400`.
+  schema:
+    type: string
+    enum: [sections, groups]

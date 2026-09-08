@@ -1,0 +1,134 @@
+MessageWritable:
+  type: object
+  title: Message (writable fields)
+  description: Fields accepted when creating/replying to messages.
+  properties:
+    subject: { type: string }
+    message: { type: string, description: Body. }
+    recipient_ids: { type: string, description: Required. Comma-delimited user ids. }
+  additionalProperties: false
+MessageCreate:
+  type: object
+  title: Message create
+  allOf:
+    - $ref: '#/MessageWritable'
+    - type: object
+      required: [recipient_ids]
+MessageStatusInput:
+  type: object
+  title: Message status update
+  description: Body of `PUT /messages/inbox/{id}`.
+  required: [message_status]
+  properties:
+    message_status: { type: string, enum: [read, unread] }
+  additionalProperties: false
+Message:
+  type: object
+  title: Message
+  description: >
+    A private message ("email style"). Threaded replies reuse the thread's
+    `id`. Sent-folder reads have `message_status: null`.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId', description: Message/thread ID. }
+    subject: { type: [string, "null"] }
+    message: { type: [string, "null"], description: Body. }
+    recipient_ids: { type: [string, "null"], description: Comma-delimited user ids. }
+    last_updated: { $ref: 'common.yaml#/Timestamp' }
+    message_status: { type: [string, "null"], enum: [read, unread, null], description: Read state; null on sent-folder reads. }
+    author_id: { $ref: 'common.yaml#/NullableSchoologyId', description: Sender user id. }
+    mid: { type: [integer, string, "null"], description: Individual message id within a thread. }
+    attachments: { $ref: 'common.yaml#/Attachment', description: With `with_attachments=TRUE`. }
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id]
+  additionalProperties: false
+MessageCollection:
+  type: object
+  title: Message collection
+  properties:
+    message:
+      type: array
+      items: { $ref: '#/Message' }
+    total: { $ref: 'common.yaml#/Total' }
+    unread_count: { type: [integer, string], description: Inbox listing only. }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+Recipient:
+  type: object
+  title: Message recipient
+  description: Entry of `GET /messages/recipients` — users the token's user may message.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId', description: User id. }
+    name: { type: [string, "null"] }
+    school: { type: [string, "null"] }
+    picture_url: { type: [string, "null"], format: uri }
+  additionalProperties: false
+Recipients:
+  type: object
+  title: Recipients
+  properties:
+    recipient:
+      type: array
+      items: { $ref: '#/Recipient' }
+  additionalProperties: false
+Reminder:
+  type: object
+  title: Reminder
+  description: >
+    A reminder for section admins — `ungraded` lists assignments with ungraded
+    revisions, `resubmitted` lists assignments with unviewed revisions.
+  properties:
+    type: { type: string, enum: [ungraded, resubmitted] }
+    count: { type: [integer, string], description: Number of reminders of this type. }
+    assignments:
+      type: [array, "null"]
+      description: Assignments with relevant revisions; embeds `section_id` and `revisions`.
+      items:
+        type: object
+        properties:
+          id: { $ref: 'common.yaml#/SchoologyId' }
+          title: { type: [string, "null"] }
+          description: { type: [string, "null"] }
+          due: { type: [string, "null"] }
+          grading_scale: { type: [integer, string, "null"] }
+          grading_period: { type: [integer, string, "null"] }
+          grading_category: { type: [integer, string, "null"] }
+          max_points: { type: [number, string, "null"] }
+          factor: { type: [number, string, "null"] }
+          is_final: { $ref: 'common.yaml#/BinaryFlag' }
+          show_comments: { $ref: 'common.yaml#/BinaryFlag' }
+          grade_stats: { $ref: 'common.yaml#/BinaryFlag' }
+          allow_dropbox: { $ref: 'common.yaml#/BinaryFlag' }
+          allow_discussion: { $ref: 'common.yaml#/BinaryFlag' }
+          published: { $ref: 'common.yaml#/BinaryFlag' }
+          type: { type: [string, "null"] }
+          grade_item_id: { $ref: 'common.yaml#/NullableSchoologyId' }
+          available: { $ref: 'common.yaml#/BinaryFlag' }
+          completed: { $ref: 'common.yaml#/BinaryFlag' }
+          dropbox_locked: { $ref: 'common.yaml#/BinaryFlag' }
+          grading_scale_type: { type: [integer, string, "null"] }
+          show_rubric: { type: [boolean, "null"] }
+          num_assignees: { type: [integer, string, "null"] }
+          assignees: { type: [array, "null"], items: { type: integer } }
+          section_id: { $ref: 'common.yaml#/NullableSchoologyId' }
+          revisions:
+            type: [array, "null"]
+            items:
+              type: object
+              properties:
+                revision_id: { $ref: 'common.yaml#/SchoologyId' }
+                uid: { $ref: 'common.yaml#/SchoologyId' }
+                created: { $ref: 'common.yaml#/Timestamp' }
+                num_items: { type: [integer, string] }
+                late: { $ref: 'common.yaml#/BinaryFlag' }
+                draft: { $ref: 'common.yaml#/BinaryFlag' }
+              additionalProperties: false
+        additionalProperties: false
+  additionalProperties: false
+Reminders:
+  type: object
+  title: Reminders
+  properties:
+    reminders:
+      type: [array, "null"]
+      items: { $ref: '#/Reminder' }
+  additionalProperties: false

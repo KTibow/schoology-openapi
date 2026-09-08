@@ -1,0 +1,147 @@
+GroupWritable:
+  type: object
+  title: Group (writable fields)
+  properties:
+    title: { type: string, description: Required. }
+    description: { type: string }
+    picture_url: { type: string, format: uri }
+    website: { type: string }
+    privacy_level: { type: string, enum: [everyone, school, building, group], description: "`custom` is read-only." }
+    category: { type: string, description: Category id (see `GET /groups/categories`). }
+    options:
+      type: object
+      properties:
+        invite_type: { type: integer, enum: [0, 1, 2], description: "`0` invite only, `1` request to join, `2` anyone." }
+        member_post: { $ref: 'common.yaml#/BinaryFlag' }
+        member_post_comment: { $ref: 'common.yaml#/BinaryFlag' }
+        create_discussion: { $ref: 'common.yaml#/BinaryFlag' }
+        create_files: { $ref: 'common.yaml#/BinaryFlag' }
+      additionalProperties: false
+    group_code: { type: string, description: External (import) ID. }
+  additionalProperties: false
+GroupCreate:
+  type: object
+  title: Group create
+  allOf:
+    - $ref: '#/GroupWritable'
+    - type: object
+      required: [title]
+Group:
+  type: object
+  title: Group
+  description: Groups are non-academic realms (clubs, staff groups) that can hold members, materials and feeds.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    building_id: { $ref: 'common.yaml#/SchoologyId' }
+    school_id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: string }
+    description: { type: [string, "null"] }
+    picture_url: { type: [string, "null"], format: uri }
+    website: { type: [string, "null"] }
+    access_code: { type: [string, "null"], description: Join code (admins only; null when closed). }
+    privacy_level: { type: [string, "null"], enum: [everyone, school, building, group, custom, "null"] }
+    category: { type: [string, "null"] }
+    options:
+      type: [object, "null"]
+      properties:
+        invite_type: { type: [integer, string] }
+        member_post: { $ref: 'common.yaml#/BinaryFlag' }
+        member_post_comment: { $ref: 'common.yaml#/BinaryFlag' }
+        create_discussion: { $ref: 'common.yaml#/BinaryFlag' }
+        create_files: { $ref: 'common.yaml#/BinaryFlag' }
+      additionalProperties: false
+    group_code: { type: [string, "null"] }
+    admin: { $ref: 'common.yaml#/BinaryFlag', description: Whether the requesting user is an admin of this group (listing responses). }
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id]
+  additionalProperties: false
+GroupCollection:
+  type: object
+  title: Group collection
+  properties:
+    group:
+      type: array
+      items: { $ref: '#/Group' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+GroupCategory:
+  type: object
+  description: Entry of `GET /groups/categories`.
+  properties:
+    id: { type: string, examples: [advising] }
+    title: { type: string, examples: [Advising Groups] }
+  additionalProperties: false
+GroupCategories:
+  type: object
+  title: Group categories
+  properties:
+    category:
+      type: array
+      items: { $ref: '#/GroupCategory' }
+  additionalProperties: false
+SchoolWritable:
+  type: object
+  title: School (writable fields)
+  properties:
+    title: { type: string, description: Required. }
+    address1: { type: string }
+    address2: { type: string }
+    city: { type: string }
+    state: { type: string }
+    postal_code: { type: string }
+    country: { type: string }
+    website: { type: string }
+    phone: { type: string }
+    fax: { type: string }
+    building_code: { type: string, description: Buildings only — configurable external ID for imports/sync. }
+  additionalProperties: false
+SchoolCreate:
+  type: object
+  title: School create
+  allOf:
+    - $ref: '#/SchoolWritable'
+    - type: object
+      required: [title]
+School:
+  type: object
+  title: School
+  description: A school (or building — buildings share this shape plus `building_code`).
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    title: { type: string }
+    address1: { type: [string, "null"] }
+    address2: { type: [string, "null"] }
+    city: { type: [string, "null"] }
+    state: { type: [string, "null"] }
+    postal_code: { type: [string, "null"] }
+    country: { type: [string, "null"] }
+    website: { type: [string, "null"] }
+    phone: { type: [string, "null"] }
+    fax: { type: [string, "null"] }
+    building_code: { type: [string, "null"], description: Buildings only. }
+    picture_url: { type: [string, "null"], format: uri }
+    links: { $ref: 'common.yaml#/Links' }
+  required: [id]
+  additionalProperties: false
+SchoolCollection:
+  type: object
+  title: School collection
+  properties:
+    school:
+      type: array
+      items: { $ref: '#/School' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+BuildingCollection:
+  type: object
+  title: Building collection
+  description: Response of `GET /schools/{school_id}/buildings`.
+  properties:
+    building:
+      type: array
+      items: { $ref: '#/School' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false

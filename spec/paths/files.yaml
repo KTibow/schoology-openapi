@@ -1,0 +1,56 @@
+Upload:
+  post:
+    tags: [Files]
+    summary: Prepare a file upload
+    description: >
+      Step 1 of the two-step upload. POST a stripped-down file object
+      (`filename`, `filesize`, `md5_checksum`); the response contains a
+      one-time `upload_location` to PUT the raw bytes to, plus the file `id`
+      used when attaching.
+    operationId: createUpload
+    x-student-access: unknown
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/UploadRequest' }
+    responses:
+      '201':
+        description: The prepared (empty) file with its upload location.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/UploadTarget' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+UploadPut:
+  put:
+    tags: [Files]
+    summary: Upload file contents
+    description: >
+      Step 2 of the two-step upload. PUT the raw bytes to the `upload_location`
+      returned by `POST /upload`, with the file's MIME type as `Content-Type`.
+      The `filesize`/`md5_checksum` must match the step-1 values and the
+      requesting user must match. The endpoint is locked after a successful
+      PUT. Returns 200 with the fleshed-out file object (not 204).
+      The final `id` is then sent inside `file-attachment` objects wherever
+      attachments are supported.
+    operationId: uploadFileBytes
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/id'
+    requestBody:
+      required: true
+      content:
+        application/octet-stream:
+          schema: { type: string, format: binary }
+    responses:
+      '200':
+        description: The saved file object.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/FileObject' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }

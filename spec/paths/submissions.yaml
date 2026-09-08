@@ -1,0 +1,241 @@
+Submissions:
+  get:
+    tags: [Submissions]
+    summary: List submissions for a grade item
+    description: >
+      All revisions for the grade item, sorted by most recent revision and
+      grouped by user. `all_revisions` returns every revision instead of just
+      the newest; `with_attachments` includes drop items.
+    operationId: listSubmissions
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/grade_item_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+      - name: all_revisions
+        in: query
+        description: Boolean — return all revisions instead of the most recent per user.
+        schema: { type: string }
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+    responses:
+      '200':
+        description: Revisions grouped by user.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/SubmissionCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+SubmissionCreateFile:
+  post:
+    tags: [Submissions]
+    summary: Create a file submission
+    description: >
+      Creates a revision from file ids passed as file attachments
+      (`file-attachment`). Denied while the user has an active draft. A student
+      can create revisions for their own submissions.
+    operationId: createSubmissionFile
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/grade_item_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              file-attachment:
+                type: object
+                properties:
+                  id: { type: array, items: { type: [integer, string] } }
+                additionalProperties: false
+            additionalProperties: false
+    responses:
+      '201':
+        description: The created revision (with attachments).
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/SubmissionCollection' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+SubmissionCreateText:
+  post:
+    tags: [Submissions]
+    summary: Create a text/HTML submission
+    description: >
+      Creates a revision from text/HTML (`body`). Submits by default; set
+      `draft: true` to save as a draft (only one active draft allowed).
+    operationId: createSubmissionText
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/grade_item_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [body]
+            properties:
+              body: { type: string, description: Text/HTML content of the revision. }
+              draft: { type: boolean, description: Save as draft instead of submitting. }
+            additionalProperties: false
+    responses:
+      '201':
+        description: The created revision.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/SubmissionCollection' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+UserSubmissions:
+  get:
+    tags: [Submissions]
+    summary: List a user's revisions for a grade item
+    description: Revisions for the given user, sorted by most recent. Supports `with_attachments`.
+    operationId: listUserSubmissions
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/grade_item_id'
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+    responses:
+      '200':
+        description: The user's revisions.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/SubmissionCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+SubmissionRevision:
+  get:
+    tags: [Submissions]
+    summary: Get a specific revision
+    description: One revision for the user and grade item. Supports `with_attachments`.
+    operationId: getSubmissionRevision
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/grade_item_id'
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+      - $ref: '../components/parameters/_index.yaml#/revision_id'
+      - $ref: '../components/parameters/_index.yaml#/with_attachments'
+    responses:
+      '200':
+        description: The revision.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/SubmissionCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Submissions]
+    summary: Delete a submission revision
+    description: Delete a submission revision (cannot be undone).
+    operationId: deleteSubmissionRevision
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/grade_item_id'
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+      - $ref: '../components/parameters/_index.yaml#/revision_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+
+SubmissionComments:
+  get:
+    tags: [Submissions]
+    summary: List submission comments
+    operationId: listSubmissionComments
+    x-student-access: ok
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/grade_item_id'
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+      - $ref: '../components/parameters/_index.yaml#/start'
+      - $ref: '../components/parameters/_index.yaml#/limit'
+    responses:
+      '200':
+        description: A paged collection of comments.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/CommentCollection' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  post:
+    tags: [Submissions]
+    summary: Comment on a submission
+    operationId: createSubmissionComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/grade_item_id'
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../components/schemas/_index.yaml#/CommentWritable' }
+    responses:
+      '201':
+        description: The created comment.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Comment' }
+      '400': { $ref: '../components/responses/_index.yaml#/BadRequest' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+
+SubmissionComment:
+  get:
+    tags: [Submissions]
+    summary: Get a submission comment
+    operationId: getSubmissionComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/grade_item_id'
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+      - $ref: '../components/parameters/_index.yaml#/comment_id'
+    responses:
+      '200':
+        description: A comment.
+        content:
+          application/json:
+            schema: { $ref: '../components/schemas/_index.yaml#/Comment' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
+  delete:
+    tags: [Submissions]
+    summary: Delete a submission comment
+    description: Delete a comment (cannot be undone).
+    operationId: deleteSubmissionComment
+    x-student-access: unknown
+    parameters:
+      - $ref: '../components/parameters/_index.yaml#/section_id'
+      - $ref: '../components/parameters/_index.yaml#/grade_item_id'
+      - $ref: '../components/parameters/_index.yaml#/user_id'
+      - $ref: '../components/parameters/_index.yaml#/comment_id'
+    responses:
+      '204': { $ref: '../components/responses/_index.yaml#/Empty204' }
+      '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
+      '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
+      '404': { $ref: '../components/responses/_index.yaml#/NotFound' }

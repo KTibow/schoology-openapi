@@ -1,0 +1,253 @@
+FriendRequest:
+  type: object
+  title: Friend request
+  description: A pending connection request between users.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    requester_id: { $ref: 'common.yaml#/SchoologyId' }
+    requester_name: { type: [string, "null"] }
+    picture_url: { type: [string, "null"], format: uri }
+    school_name: { type: [string, "null"] }
+    school_id: { $ref: 'common.yaml#/SchoologyId' }
+    created: { $ref: 'common.yaml#/Timestamp' }
+  additionalProperties: false
+FriendRequests:
+  type: object
+  title: Friend request collection
+  description: Response of `GET /users/{id}/requests/friends`.
+  properties:
+    request:
+      type: array
+      items: { $ref: '#/FriendRequest' }
+  additionalProperties: false
+Invite:
+  type: object
+  title: Invite
+  description: >
+    A pending invite for the user to join a course section or group. The
+    `{realm}` path segment is `sections` or `groups` (other values such as
+    `sent`/`received` are rejected with 400).
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    section_id: { $ref: 'common.yaml#/NullableSchoologyId', description: Course invites. }
+    section_name: { type: [string, "null"], description: Course invites. }
+    group_id: { $ref: 'common.yaml#/NullableSchoologyId', description: Group invites. }
+    group_name: { type: [string, "null"], description: Group invites. }
+    picture_url: { type: [string, "null"], format: uri }
+    school_name: { type: [string, "null"] }
+    school_id: { $ref: 'common.yaml#/NullableSchoologyId' }
+    created: { $ref: 'common.yaml#/Timestamp' }
+  additionalProperties: false
+Invites:
+  type: object
+  title: Invite collection
+  properties:
+    invite:
+      type: array
+      items: { $ref: '#/Invite' }
+  additionalProperties: false
+InviteAction:
+  type: object
+  title: Invite action
+  description: Body of `PUT /users/{id}/invites/{realm}/{invite_id}`. (XML bodies additionally need a `<request>` wrapper.)
+  required: [invite]
+  properties:
+    invite:
+      type: object
+      required: [invite_action]
+      properties:
+        invite_action: { type: string, enum: [accept, deny] }
+      additionalProperties: false
+  additionalProperties: false
+RequestAction:
+  type: object
+  title: Request action
+  description: Body of `PUT /users/{id}/requests/friends/{request_id}`.
+  required: [request_action]
+  properties:
+    request_action: { type: string, enum: [accept, deny] }
+  additionalProperties: false
+NetworkUser:
+  type: object
+  title: Network user
+  description: A user in another user's network (a reduced user shape).
+  properties:
+    uid: { $ref: 'common.yaml#/SchoologyId' }
+    name_title: { type: [string, "null"] }
+    name_title_show: { type: [integer, string, "null"] }
+    name_first: { type: [string, "null"] }
+    name_first_preferred: { type: [string, "null"] }
+    name_middle: { type: [string, "null"] }
+    name_middle_show: { type: [integer, string, "null"] }
+    name_last: { type: [string, "null"] }
+    picture_url: { type: [string, "null"], format: uri }
+  additionalProperties: false
+NetworkUsers:
+  type: object
+  title: Network listing
+  description: Response of `GET /users/{id}/network` (max 30 records per page via `page`).
+  properties:
+    user:
+      type: array
+      items: { $ref: '#/NetworkUser' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+SearchUser:
+  type: object
+  title: User search result
+  properties:
+    uid: { $ref: 'common.yaml#/SchoologyId' }
+    name: { type: [string, "null"] }
+    picture_url: { type: [string, "null"], format: uri }
+    school: { type: [string, "null"] }
+    school_id: { $ref: 'common.yaml#/SchoologyId' }
+  additionalProperties: false
+SearchCourse:
+  type: object
+  title: Course search result
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    course_title: { type: [string, "null"] }
+    dep_code: { type: [string, "null"] }
+    course_code: { type: [string, "null"] }
+    course_description: { type: [string, "null"] }
+    picture_url: { type: [string, "null"], format: uri }
+    school: { type: [string, "null"] }
+    school_id: { $ref: 'common.yaml#/SchoologyId' }
+  additionalProperties: false
+SearchGroup:
+  type: object
+  title: Group search result
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId' }
+    group_title: { type: [string, "null"] }
+    picture_url: { type: [string, "null"], format: uri }
+    school: { type: [string, "null"] }
+    school_id: { $ref: 'common.yaml#/SchoologyId' }
+  additionalProperties: false
+SearchResults:
+  type: object
+  title: Search results
+  description: >
+    Response of `GET /search`. Each present type key holds a paged collection
+    of that result kind.
+  properties:
+    users:
+      type: [object, "null"]
+      properties:
+        search_result: { type: array, items: { $ref: '#/SearchUser' } }
+        total: { $ref: 'common.yaml#/Total' }
+        links: { $ref: 'common.yaml#/CollectionLinks' }
+      additionalProperties: false
+    courses:
+      type: [object, "null"]
+      properties:
+        search_result: { type: array, items: { $ref: '#/SearchCourse' } }
+        total: { $ref: 'common.yaml#/Total' }
+        links: { $ref: 'common.yaml#/CollectionLinks' }
+      additionalProperties: false
+    groups:
+      type: [object, "null"]
+      properties:
+        search_result: { type: array, items: { $ref: '#/SearchGroup' } }
+        total: { $ref: 'common.yaml#/Total' }
+        links: { $ref: 'common.yaml#/CollectionLinks' }
+      additionalProperties: false
+  additionalProperties: false
+Target:
+  type: object
+  title: Trigger target
+  description: >
+    A user-defined endpoint that Schoology POSTs event objects to when a
+    subscribed trigger fires. Managed from the admin panel or these endpoints;
+    the caller needs access to the Schoology Trigger UI.
+  properties:
+    id: { $ref: 'common.yaml#/SchoologyId', description: Schoology ID of the target. }
+    target: { type: string, format: uri, description: URL that event data is sent to. }
+    description: { type: [string, "null"], description: Optional description of the target. }
+  required: [id]
+  additionalProperties: false
+TargetWritable:
+  type: object
+  title: Trigger target (writable fields)
+  properties:
+    target: { type: string, format: uri, description: URL that event data is sent to. }
+    description: { type: string, description: Optional description of the target. }
+  additionalProperties: false
+TargetCollection:
+  type: object
+  title: Trigger target collection
+  properties:
+    target:
+      type: array
+      items: { $ref: '#/Target' }
+    total: { $ref: 'common.yaml#/Total' }
+    links: { $ref: 'common.yaml#/CollectionLinks' }
+  additionalProperties: false
+Subscription:
+  type: object
+  title: Trigger subscription
+  description: >
+    The relationship between a Schoology-defined trigger and a target. One
+    target may subscribe to many triggers.
+  properties:
+    target_id: { $ref: 'common.yaml#/SchoologyId', description: Target to relate to this trigger. }
+    target_url: { type: [string, "null"], format: uri, description: Echoed URL of the target. }
+    trigger: { type: string, description: 'Name of the trigger, e.g. `grades`.' }
+    subscribed:
+      $ref: 'common.yaml#/BinaryFlag'
+      description: >
+        Whether the target is subscribed. Always `0` in the list response — set it
+        in the PUT body to subscribe (`1`) or unsubscribe (`0`).
+    version: { type: [string, "null"], description: 'API version this subscription belongs to. Only `v1` is supported.' }
+    include_object:
+      $ref: 'common.yaml#/BinaryFlag'
+      description: Whether to include the extended event object in the payload. Defaults to `0`.
+  additionalProperties: false
+SubscriptionWritable:
+  type: object
+  title: Trigger subscription (writable fields)
+  properties:
+    target_id: { $ref: 'common.yaml#/SchoologyId', description: Required. Target to relate to this trigger. }
+    trigger: { type: string, description: Required. Name of the trigger. }
+    subscribed: { $ref: 'common.yaml#/BinaryFlag', description: 'Required. `1` to subscribe, `0` to unsubscribe.' }
+    version: { type: string, description: 'API version. Only `v1` is supported.' }
+    include_object: { $ref: 'common.yaml#/BinaryFlag', description: Include the extended event object. Defaults to `0`. }
+  required: [target_id, trigger, subscribed]
+  additionalProperties: false
+SubscriptionCollection:
+  type: object
+  title: Trigger subscription collection
+  properties:
+    subscription:
+      type: array
+      items: { $ref: '#/Subscription' }
+  additionalProperties: false
+SubscriptionInput:
+  type: object
+  title: Trigger subscription input
+  description: Body of `PUT /triggers/subscriptions` — a batch of subscribe/unsubscribe changes.
+  properties:
+    subscription:
+      type: array
+      items: { $ref: '#/SubscriptionWritable' }
+  required: [subscription]
+  additionalProperties: false
+SubscriptionResult:
+  type: object
+  title: Trigger subscription result
+  description: Per-item outcome of a subscription change.
+  properties:
+    item: { $ref: '#/Subscription' }
+    status: { type: [integer, string], description: HTTP-style status for this item. }
+    message: { type: string, description: 'Explanation when the item failed, e.g. an unknown trigger name.' }
+  additionalProperties: false
+SubscriptionResults:
+  type: object
+  title: Trigger subscription results
+  properties:
+    subscription:
+      type: array
+      items: { $ref: '#/SubscriptionResult' }
+  additionalProperties: false
