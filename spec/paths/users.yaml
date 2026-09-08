@@ -156,7 +156,14 @@ UsersMe:
     description: |
       Shortcut for `GET /users/{current user id}`. **Returns a 303 redirect** to
       the canonical URL — regenerate the OAuth header (fresh nonce/timestamp)
-      before following it.
+      before following it. Replaying the header the redirect was issued against
+      is rejected outright: *"Duplicate timestamp/nonce combination, possible
+      replay attack."*
+
+      If your client signs once per request and follows redirects itself, it
+      cannot do that, and this endpoint is unusable to it. Get your own ID from
+      `GET /app-user-info` instead — it answers `200` with `api_uid` and no
+      redirect — then call `GET /users/{user_id}` directly.
     operationId: getMe
     x-student-access: ok
     x-verified: true
@@ -563,7 +570,9 @@ AppUserInfo:
     summary: Validate tokens against the web session
     description: >
       If the user has an active Schoology web session, returns the user id for
-      the passed OAuth tokens and the web session timestamp.
+      the passed OAuth tokens and the web session timestamp. Unlike
+      `GET /users/me` this answers `200` directly, so it is the way to learn
+      your own ID from a client that cannot re-sign a redirect.
     operationId: getAppUserInfo
     x-student-access: ok
     x-verified: true
