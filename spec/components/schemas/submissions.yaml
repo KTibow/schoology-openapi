@@ -10,6 +10,14 @@ SubmissionRevision:
     created: { $ref: 'common.yaml#/Timestamp', description: Unix timestamp. }
     late: { $ref: 'common.yaml#/BinaryFlag' }
     num_items: { type: [integer, string], description: Attached items in this revision. }
+    fids:
+      type: [array, "null"]
+      description: >
+        Undocumented. One file ID per attached item. They are not enough to
+        fetch anything: a download URL embeds the file's checksum and
+        extension, so pass `with_attachments=1` and follow the `download_path`
+        it returns instead of assembling one.
+      items: { $ref: 'common.yaml#/SchoologyId' }
     draft: { $ref: 'common.yaml#/BinaryFlag', description: Only one active draft per user is allowed. }
     body: { type: string, description: Text/HTML content — sent to `.../create`. }
     attachments: { $ref: 'common.yaml#/Attachment' }

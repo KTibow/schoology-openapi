@@ -8,6 +8,7 @@ Submissions:
       the newest; `with_attachments` includes drop items.
     operationId: listSubmissions
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/section_id'
       - $ref: '../components/parameters/_index.yaml#/grade_item_id'
@@ -104,6 +105,7 @@ UserSubmissions:
     description: Revisions for the given user, sorted by most recent. Supports `with_attachments`.
     operationId: listUserSubmissions
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/section_id'
       - $ref: '../components/parameters/_index.yaml#/grade_item_id'

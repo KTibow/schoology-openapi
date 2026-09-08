@@ -237,8 +237,8 @@ def is_empty_collection(body):
     return not any(lists.values())
 
 
-def first_item_id(body):
-    """Id of the first object in a Schoology collection wrapper.
+def first_item_id(body, index=0):
+    """Id of the `index`-th object in a Schoology collection wrapper.
 
     Collections wrap their rows under a singular key (`event`, `discussion`,
     `role`, ...). Rather than maintain a list of those names, take the first
@@ -250,10 +250,10 @@ def first_item_id(body):
     for key, value in body.items():
         if key in ("links", "tags", "attachments"):
             continue
-        if isinstance(value, list) and value and isinstance(value[0], dict):
+        if isinstance(value, list) and len(value) > index and isinstance(value[index], dict):
             for idk in ("id", "uid", "nid"):
-                if idk in value[0]:
-                    return value[0][idk]
+                if idk in value[index]:
+                    return value[index][idk]
     return None
 
 
@@ -364,7 +364,7 @@ def fill(template, ids):
     return out
 
 
-def resolve(tmpl, scope, depth=0):
+def resolve(tmpl, scope, depth=0, index=0):
     """Fill a template, discovering each unknown id from its own collection.
 
     An item id must belong to the realm being probed: reusing a section's event
@@ -409,14 +409,14 @@ def resolve(tmpl, scope, depth=0):
             # Only at the top level: nesting the fallback multiplies out to
             # hundreds of requests for a template with three unknown ids.
             for alt in (_section_variants(scope) if depth == 0 else [scope]):
-                parent_path = resolve(cand, alt, depth + 1)
+                parent_path = resolve(cand, alt, depth + 1, index)
                 if parent_path is None or parent_path in _EMPTY:
                     continue
                 status, body = get_json("/v1" + parent_path)
                 time.sleep(DELAY)
                 if first_item_id(body) is None:
                     _EMPTY.add(parent_path)
-                item = first_item_id(body)
+                item = first_item_id(body, index)
                 if item is not None:
                     found = dict(alt, **{name: item})
                     break
@@ -446,18 +446,28 @@ def _section_variants(scope):
             yield alt
 
 
-def resolve_candidates(tmpl, scope, limit=4):
-    """Concrete paths for `tmpl`, one per enrolled section, best-effort.
+def resolve_candidates(tmpl, scope, limit=10, items=8):
+    """Concrete paths for `tmpl`, best-effort, most promising first.
 
-    The caller walks these until a response carries records, so an operation is
-    judged on an instance that has content rather than on whichever one happened
-    to sort first.
+    The caller walks these until a response carries records. Varying the section
+    is not enough on its own: a submission listing is empty for every assignment
+    the student never turned in, and this account's first section had seven such
+    before one with a revision. So try other items from the parent collection
+    too, which is the difference between verifying the Revision schema and
+    reporting the endpoint as an empty wrapper.
     """
     seen = []
-    for alt in _section_variants(scope):
-        concrete = resolve(tmpl, alt)
-        if concrete and concrete not in seen:
-            seen.append(concrete)
+
+    def add(path):
+        if path and path not in seen:
+            seen.append(path)
+
+    for alt in _section_variants(scope):          # same item, other sections
+        add(resolve(tmpl, alt))
+        if len(seen) >= limit:
+            return seen
+    for index in range(1, items):                 # other items, same section
+        add(resolve(tmpl, scope, index=index))
         if len(seen) >= limit:
             break
     return seen or [resolve(tmpl, scope)]
