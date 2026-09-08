@@ -13,7 +13,7 @@ Mapping from probe/_access.json:
   400 / 404  -> unknown   (the fixture id was wrong; says nothing about access)
   not probed -> unknown
 
-Run: python3 scripts/probe_access.py && python3 scripts/apply_access.py
+Run: python3 scripts/probe.py && python3 scripts/apply_access.py
 """
 import glob
 import json
@@ -54,7 +54,7 @@ def match_template(concrete, paths):
 
 def main():
     if not os.path.exists(ACCESS):
-        sys.exit(f"{ACCESS} not found — run scripts/probe_access.py first "
+        sys.exit(f"{ACCESS} not found — run scripts/probe.py first "
                  f"(needs live credentials).")
     doc = json.load(open(BUNDLE))
     tmpl_of = {o["operationId"]: p

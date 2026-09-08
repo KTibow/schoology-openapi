@@ -45,6 +45,35 @@ def match_spec_path(concrete):
             best, best_score = tmpl, score
     return best
 
+def is_empty_collection(body):
+    """True when the body is a collection wrapper holding no records."""
+    if not isinstance(body, dict):
+        return False
+    lists = {k: v for k, v in body.items() if isinstance(v, list) and k != "links"}
+    scalars = [k for k, v in body.items() if not isinstance(v, (list, dict))]
+    if not lists or scalars:
+        return False
+    return not any(lists.values())
+
+
+def response_schema_names(bundle, op):
+    """Every component schema named anywhere under the operation's 200."""
+    out = set()
+
+    def walk(node):
+        if isinstance(node, dict):
+            if "$ref" in node:
+                out.add(node["$ref"].split("/")[-1])
+            for v in node.values():
+                walk(v)
+        elif isinstance(node, list):
+            for v in node:
+                walk(v)
+
+    walk((op.get("responses") or {}).get("200") or {})
+    return out
+
+
 def main():
     # The request fixtures need no credentials, so they run everywhere (CI
     # included). The response half needs the probe corpus and is skipped
@@ -55,7 +84,8 @@ def main():
         sys.exit(1 if verify_requests() else 0)
 
     index = json.load(open("probe/_index.json"))
-    ok, fail, skip = 0, 0, 0
+    ok, fail, skip, empty = 0, 0, 0, 0
+    schemas_hit, schemas_empty, schemas_seen = set(), set(), {}
     failures = []
     for key, info in sorted(index.items()):
         if info["status"] != 200:
@@ -90,7 +120,15 @@ def main():
         errors = sorted(v.iter_errors(body), key=lambda e: list(e.absolute_path))
         if not errors:
             ok += 1
-            print(f"OK    {key} <- {tmpl}")
+            if is_empty_collection(body):
+                empty += 1
+                schemas_empty.add(op["operationId"])
+                schemas_seen.setdefault(op["operationId"], False)
+                print(f"EMPTY {key} <- {tmpl} (wrapper only, no records)")
+            else:
+                schemas_seen[op["operationId"]] = True
+                schemas_hit |= response_schema_names(BUNDLE, op)
+                print(f"OK    {key} <- {tmpl}")
         else:
             fail += 1
             print(f"FAIL  {key} <- {tmpl} ({len(errors)} errors)")
@@ -98,7 +136,25 @@ def main():
                 loc = "/".join(str(p) for p in e.absolute_path) or "(root)"
                 print(f"        at {loc}: {e.message[:160]}")
             failures.append((key, tmpl, errors))
-    print(f"\n{ok} validated, {fail} failed, {skip} skipped")
+    # A schema is only exercised by a body that carries a record. An empty
+    # collection validates its wrapper and nothing else -- `{"album": []}`
+    # satisfies AlbumCollection without ever touching the Album schema. Counting
+    # those as passes makes the corpus look far better than it is, and hides
+    # exactly the endpoints where the account has no content to check against.
+    reachable = set()
+    for path, item in BUNDLE["paths"].items():
+        op = item.get("get")
+        if op and (op.get("responses") or {}).get("200"):
+            reachable |= response_schema_names(BUNDLE, op)
+    print(f"\n{ok} validated ({empty} of them an empty wrapper only), "
+          f"{fail} failed, {skip} skipped")
+    print(f"response schemas exercised by a real record: "
+          f"{len(schemas_hit & reachable)} of {len(reachable)}")
+    # Only report an operation as recordless when *no* probe of it found data;
+    # one empty section says nothing when another had rows.
+    never = sorted(o for o in schemas_empty if not schemas_seen.get(o))
+    if never:
+        print("no records to check against: " + ", ".join(never))
 
     print("\n--- request body fixtures ---")
     req_fail = verify_requests()

@@ -153,7 +153,7 @@ SectionsExt:
       Look up a section by its `section_school_code` (e.g. SIS ID).
 
     operationId: getSectionByExtId
-    x-student-access: unknown
+    x-student-access: ok
     parameters:
       - $ref: '../components/parameters/_index.yaml#/ext_id'
     responses:

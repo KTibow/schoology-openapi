@@ -264,5 +264,5 @@
   $ref: './realm-content.yaml#/AlbumComment'
 /sections/{realm_id}/pages:
   $ref: './realm-content.yaml#/Pages'
-/sections/{realm_id}/page/{id}:
+/sections/{realm_id}/pages/{id}:
   $ref: './realm-content.yaml#/PageItem'

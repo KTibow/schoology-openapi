@@ -220,11 +220,11 @@ RealmFolder:
       in: path
       required: true
       description: >
-        Realm collection that owns the materials tree. `courses` and `sections`
-        behave identically here (see the operation description).
+        Realm collection that owns the materials tree. Only `courses` works —
+        with a *section* id (see the operation description).
       schema:
         type: string
-        enum: [courses, sections, groups]
+        enum: [courses]
   get:
     tags: [Folders]
     summary: Get a materials tree folder
@@ -237,21 +237,25 @@ RealmFolder:
       **`{realm_id}` is a section id, not a course id.** The official docs write
       this endpoint as `courses/{course_id}/folder/{folder_id}`, but a course is
       only a container — objects belong to its sections — and passing a real
-      course id returns `403`. What each combination actually returns:
-
-      | request | result |
-      | --- | --- |
-      | `courses/{section id}/folder/0` | `200` |
-      | `courses/{course id}/folder/0` | `403` |
-      | `sections/{section id}/folder/0` | `200` |
-      | `sections/{course id}/folder/0` | `404` |
-
-      So the realm segment is interchangeable and the id is what matters. Use
-      `sections` (or `groups`, keyed by group id) and read section ids from
+      course id returns `403`. Read section ids from
       `GET /users/{user_id}/sections`.
+
+      > [!CAUTION]
+      > **The realm segment is not interchangeable, whatever the status code
+      > suggests.** Only `courses` returns a folder. `sections` and `groups`
+      > answer `200` with the section or group object itself, because an
+      > unrecognised subresource falls back to the realm object rather than
+      > `404` (see **Realm-generic paths** in the document description).
+
+      | request | status | body |
+      | --- | --- | --- |
+      | `courses/{section id}/folder/0` | `200` | the folder ✅ |
+      | `courses/{course id}/folder/0` | `403` | — |
+      | `sections/{section id}/folder/0` | `200` | the **Section** ❌ |
+      | `groups/{group id}/folder/0` | `200` | the **Group** ❌ |
     operationId: getRealmFolder
     x-student-access: ok
-    x-student-access-by-realm: { courses: forbidden, groups: ok, sections: ok }
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/realm_id'
       - $ref: '../components/parameters/_index.yaml#/folder_id'

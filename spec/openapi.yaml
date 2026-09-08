@@ -26,6 +26,13 @@ info:
     What a realm *is* — and why a course is not one you can hang material on —
     is on the **Courses** and **Sections** tags.
 
+    > [!CAUTION]
+    > A status code here does not tell you whether a path is right. Under
+    > `sections`, `groups` and `schools` a subresource Schoology does not
+    > recognise returns `200` with the realm object rather than `404`, and a
+    > realm an endpoint does not support returns `403`. Validate a response
+    > against its schema before trusting the path that produced it.
+
     ## Access annotations
 
     Operations carry vendor extensions recorded against a live **student**
@@ -33,6 +40,9 @@ info:
 
     - `x-student-access: ok | forbidden | unknown` — what actually happened
       when the request was made. `ok` is a 2xx or 3xx, `forbidden` is `403`.
+      On a realm-generic path `forbidden` is ambiguous, because an unsupported
+      realm answers `403` too: it means the request was refused, not
+      necessarily that your account was the reason.
       **`unknown` is not a prediction**: it means nobody has tried, so it is
       neither permission nor refusal — assume nothing and handle `403`. It
       covers every non-GET operation, since establishing whether a student may
@@ -61,6 +71,11 @@ info:
     `section`, `assignment`, …) beside sibling `total` and `links` fields. The
     API serves both JSON and XML via `Accept`/`Content-Type`; only JSON is
     modelled here.
+
+    Build request URLs from this document rather than following the ones
+    responses hand you: `location`, `realm_link` and `self` use spellings that
+    are not always the documented path and are not always live — a resource's
+    `parent.realm_link` points at `/group/{id}`, which answers `404`.
   contact:
     # This is an unofficial description; `contact` is where a reader goes when
     # the spec is wrong, which is this repo's issue tracker, not Schoology

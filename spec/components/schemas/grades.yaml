@@ -268,6 +268,7 @@ Completion:
     their own via `/completion/user/...`.
   properties:
     uid: { $ref: 'common.yaml#/SchoologyId' }
+    school_uid: { type: [string, "null"], description: The user's school-assigned unique ID. }
     total_rules: { type: [integer, string] }
     completed_rules: { type: [integer, string] }
     percent_complete: { type: [number, integer, string] }

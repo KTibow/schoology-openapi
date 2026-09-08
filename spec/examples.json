@@ -28,34 +28,18 @@
    "self": "https://api.schoology.com/v1/users/100001"
   }
  },
+ "/collections/{collection_id}": {
+  "id": 100001,
+  "is_default": 1,
+  "shared_users": 1,
+  "title": "Chapter 3 Reading Response",
+  "uid": 100001
+ },
  "/collections/{collection_id}/resources": {
   "links": {
    "self": "https://api.schoology.com/v1/users/100001"
   },
-  "resources": [
-   {
-    "collection_id": 101000,
-    "color": "example",
-    "folder_id": 0,
-    "id": 100001,
-    "last_updated": 1760086400,
-    "resource_notes": "example",
-    "title": "Chapter 3 Reading Response",
-    "type": "assignment",
-    "uid": 100001
-   },
-   {
-    "collection_id": 101000,
-    "color": "example",
-    "folder_id": 0,
-    "id": 100001,
-    "last_updated": 1760086400,
-    "resource_notes": "example",
-    "title": "Chapter 3 Reading Response",
-    "type": "assignment",
-    "uid": 100001
-   }
-  ],
+  "resources": [],
   "total": 2
  },
  "/gradingperiods/{grading_period_id}": {
@@ -66,6 +50,61 @@
   "parent": "example",
   "start": "2026-10-14 09:00:00",
   "title": "Chapter 3 Reading Response"
+ },
+ "/groups": {
+  "group": [
+   {
+    "access_code": null,
+    "building_id": "100011",
+    "category": "example",
+    "description": "Read the chapter and answer the three prompts.",
+    "group_code": "example",
+    "id": "100001",
+    "links": {
+     "self": "https://api.schoology.com/v1/users/100001"
+    },
+    "options": {
+     "create_discussion": 1,
+     "create_files": 1,
+     "invite_type": 1,
+     "member_post": 1,
+     "member_post_comment": 1
+    },
+    "picture_url": "https://asset-cdn.schoology.com/system/files/imagecache/profile_reg/pictures/example.jpg",
+    "privacy_level": "everyone",
+    "school_id": "100010",
+    "title": "Chapter 3 Reading Response",
+    "website": ""
+   },
+   {
+    "access_code": null,
+    "building_id": "100011",
+    "category": "example",
+    "description": "Read the chapter and answer the three prompts.",
+    "group_code": "example",
+    "id": "100001",
+    "links": {
+     "self": "https://api.schoology.com/v1/users/100001"
+    },
+    "options": {
+     "create_discussion": 1,
+     "create_files": 1,
+     "invite_type": 1,
+     "member_post": 1,
+     "member_post_comment": 1
+    },
+    "picture_url": "https://asset-cdn.schoology.com/system/files/imagecache/profile_reg/pictures/example.jpg",
+    "privacy_level": "everyone",
+    "school_id": "100010",
+    "title": "Chapter 3 Reading Response",
+    "website": ""
+   }
+  ],
+  "links": {
+   "next": "https://api.schoology.com/v1/users?start=20&limit=20",
+   "self": "https://api.schoology.com/v1/users/100001"
+  },
+  "total": 2
  },
  "/groups/categories": {
   "category": [
@@ -78,6 +117,27 @@
     "title": "Chapter 3 Reading Response"
    }
   ]
+ },
+ "/groups/{group_id}": {
+  "access_code": null,
+  "admin": 1,
+  "building_id": "100011",
+  "category": "example",
+  "description": "Read the chapter and answer the three prompts.",
+  "group_code": "example",
+  "id": "100001",
+  "options": {
+   "create_discussion": 1,
+   "create_files": 1,
+   "invite_type": 1,
+   "member_post": 1,
+   "member_post_comment": 1
+  },
+  "picture_url": "https://asset-cdn.schoology.com/system/files/imagecache/profile_reg/pictures/example.jpg",
+  "privacy_level": "everyone",
+  "school_id": "100010",
+  "title": "Chapter 3 Reading Response",
+  "website": ""
  },
  "/like/{id}": {
   "links": {
@@ -142,6 +202,7 @@
     },
     "message": "Success.",
     "message_status": "read",
+    "mid": null,
     "recipient_ids": "example",
     "subject": "Question about the essay"
    },
@@ -154,6 +215,7 @@
     },
     "message": "Success.",
     "message_status": "read",
+    "mid": null,
     "recipient_ids": "example",
     "subject": "Question about the essay"
    }
@@ -211,6 +273,38 @@
    }
   ]
  },
+ "/recent": {
+  "links": {
+   "next": "https://api.schoology.com/v1/users?start=20&limit=20",
+   "self": "https://api.schoology.com/v1/users/100001"
+  },
+  "update": [
+   {
+    "body": "Posted to the class stream.",
+    "created": 1760000000,
+    "group_id": 100300,
+    "id": 100001,
+    "last_updated": "1760086400",
+    "likes": 1,
+    "num_comments": 1,
+    "realm": "section",
+    "uid": 100001,
+    "user_like_action": true
+   },
+   {
+    "body": "Posted to the class stream.",
+    "created": 1760000000,
+    "id": 100001,
+    "last_updated": "1760086400",
+    "likes": 1,
+    "num_comments": 1,
+    "realm": "section",
+    "section_id": 100100,
+    "uid": 100001,
+    "user_like_action": true
+   }
+  ]
+ },
  "/reminders/{type}": {
   "reminders": [
    {
@@ -241,6 +335,12 @@
    }
   ]
  },
+ "/roles/{id}": {
+  "faculty": 1,
+  "id": 100001,
+  "role_type": 1,
+  "title": "Chapter 3 Reading Response"
+ },
  "/schools": {
   "school": [
    {
@@ -260,12 +360,101 @@
    }
   ]
  },
+ "/schools/{school_id}": {
+  "address1": "example",
+  "address2": "example",
+  "building_code": "example",
+  "city": "example",
+  "country": "example",
+  "fax": "example",
+  "id": "100001",
+  "phone": "",
+  "picture_url": "https://asset-cdn.schoology.com/system/files/imagecache/profile_reg/pictures/example.jpg",
+  "postal_code": "example",
+  "state": "example",
+  "title": "Chapter 3 Reading Response",
+  "website": ""
+ },
+ "/sections": {
+  "links": {
+   "self": "https://api.schoology.com/v1/users/100001"
+  },
+  "section": [],
+  "total": 2
+ },
+ "/sections/ext/{id}": {
+  "access_code": "example",
+  "active": 1,
+  "admin": 1,
+  "building_id": "100011",
+  "course_code": "ENG-9",
+  "course_id": "100200",
+  "course_title": "English 9",
+  "description": "Read the chapter and answer the three prompts.",
+  "end_time": "example",
+  "grade_level_range_end": "example",
+  "grade_level_range_start": "example",
+  "grading_periods": [
+   1
+  ],
+  "id": "100001",
+  "location": "https://api.schoology.com/v1/users/100001",
+  "meeting_days": [
+   "example"
+  ],
+  "options": {
+   "allow_custom_overall_grade": 1,
+   "allow_custom_overall_grade_text": 1,
+   "content_index_visibility": {
+    "album": 1,
+    "assessments": 1,
+    "assignments": 1,
+    "common_assessments": 1,
+    "course_assessment": 1,
+    "discussion": 1,
+    "documents": 1,
+    "pages": 1,
+    "topics": 1
+   },
+   "create_discussion": "0",
+   "default_grading_scale_id": 1,
+   "hide_grading_period_grade": 1,
+   "hide_overall_grade": 1,
+   "member_post": "0",
+   "member_post_comment": "0",
+   "upload_documents": "0",
+   "weighted_grading_categories": "0"
+  },
+  "parent_id": null,
+  "profile_url": "https://asset-cdn.schoology.com/system/files/imagecache/profile_reg/pictures/example.jpg",
+  "school_id": "100010",
+  "section_code": "ENG-9-P3",
+  "section_school_code": "ENG-9-P3-F26",
+  "section_title": "Period 3",
+  "start_time": "example",
+  "subject_area": "4",
+  "synced": "0",
+  "weight": "1"
+ },
  "/sections/{realm_id}/pages": {
   "links": {
    "self": "https://api.schoology.com/v1/users/100001"
   },
   "page": [],
   "total": 2
+ },
+ "/sections/{realm_id}/pages/{id}": {
+  "available": 1,
+  "body": "Posted to the class stream.",
+  "completed": 1,
+  "completion_status": "example",
+  "created": 1760000000,
+  "display_weight": 1,
+  "folder_id": 0,
+  "id": 100001,
+  "inline": 1,
+  "published": 1,
+  "title": "Chapter 3 Reading Response"
  },
  "/sections/{section_id}": {
   "access_code": "example",
@@ -401,6 +590,130 @@
   },
   "total": 2
  },
+ "/sections/{section_id}/assignments/{assignment_id}": {
+  "allow_discussion": "0",
+  "allow_dropbox": "0",
+  "assignment_type": "example",
+  "auto_publish_grades": 1,
+  "available": 1,
+  "collected_only": 1,
+  "completed": 1,
+  "completion_status": "example",
+  "count_in_grade": 1,
+  "description": "Read the chapter and answer the three prompts.",
+  "display_weight": null,
+  "dropbox_locked": 1,
+  "due": "2026-10-14 23:59:00",
+  "factor": "1",
+  "folder_id": "0",
+  "grade_item_id": 100400,
+  "grade_stats": "0",
+  "grading_category": "example",
+  "grading_period": "example",
+  "grading_scale": "example",
+  "grading_scale_type": 1,
+  "id": 100001,
+  "is_final": "0",
+  "last_updated": "1760086400",
+  "max_points": "100",
+  "published": 1,
+  "show_comments": "0",
+  "show_rubric": true,
+  "title": "Chapter 3 Reading Response",
+  "type": "assignment",
+  "web_url": "https://example.edu/resource"
+ },
+ "/sections/{section_id}/assignments/{assignment_id}/comments": {
+  "comment": []
+ },
+ "/sections/{section_id}/completion/user/{user_id}/{id}": {
+  "completed": 1,
+  "completed_rules": 1,
+  "percent_complete": 1,
+  "school_uid": "S1000001",
+  "total_rules": 1,
+  "uid": 100001
+ },
+ "/sections/{section_id}/grade_items": {
+  "assignment": [
+   {
+    "allow_discussion": "0",
+    "allow_dropbox": "0",
+    "assignment_type": "example",
+    "auto_publish_grades": 1,
+    "available": 1,
+    "collected_only": 1,
+    "completed": 1,
+    "completion_status": "example",
+    "count_in_grade": 1,
+    "description": "Read the chapter and answer the three prompts.",
+    "display_weight": "example",
+    "dropbox_locked": 1,
+    "due": "2026-10-14 23:59:00",
+    "factor": "1",
+    "folder_id": "0",
+    "grade_item_id": 100400,
+    "grade_stats": "0",
+    "grading_category": "example",
+    "grading_period": "example",
+    "grading_scale": "example",
+    "grading_scale_type": 1,
+    "id": 100001,
+    "is_final": "0",
+    "last_updated": "1760086400",
+    "links": {
+     "self": "https://api.schoology.com/v1/users/100001"
+    },
+    "max_points": "100",
+    "published": 1,
+    "show_comments": "0",
+    "show_rubric": true,
+    "title": "Chapter 3 Reading Response",
+    "type": "assignment",
+    "web_url": "https://example.edu/resource"
+   },
+   {
+    "allow_discussion": "0",
+    "allow_dropbox": "0",
+    "assignment_type": "example",
+    "auto_publish_grades": 1,
+    "available": 1,
+    "collected_only": 1,
+    "completed": 1,
+    "completion_status": "example",
+    "count_in_grade": 1,
+    "description": "Read the chapter and answer the three prompts.",
+    "display_weight": "example",
+    "dropbox_locked": 1,
+    "due": "2026-10-14 23:59:00",
+    "factor": "1",
+    "folder_id": "0",
+    "grade_item_id": 100400,
+    "grade_stats": "0",
+    "grading_category": "example",
+    "grading_period": "example",
+    "grading_scale": "example",
+    "grading_scale_type": 1,
+    "id": 100001,
+    "is_final": "0",
+    "last_updated": "1760086400",
+    "links": {
+     "self": "https://api.schoology.com/v1/users/100001"
+    },
+    "max_points": "100",
+    "published": 1,
+    "show_comments": "0",
+    "show_rubric": true,
+    "title": "Chapter 3 Reading Response",
+    "type": "assignment",
+    "web_url": "https://example.edu/resource"
+   }
+  ],
+  "links": {
+   "self": "https://api.schoology.com/v1/users/100001"
+  },
+  "total": 2
+ },
  "/sections/{section_id}/grade_items/{assignment_id}": {
   "allow_discussion": "0",
   "allow_dropbox": "0",
@@ -433,6 +746,125 @@
   "title": "Chapter 3 Reading Response",
   "type": "assignment",
   "web_url": "https://example.edu/resource"
+ },
+ "/sections/{section_id}/grading_categories": {
+  "grading_category": [
+   {
+    "delta": 1,
+    "id": 100001,
+    "realm": "section",
+    "realm_id": "100100",
+    "title": "Chapter 3 Reading Response",
+    "weight": 1
+   },
+   {
+    "delta": 1,
+    "id": 100001,
+    "realm": "section",
+    "realm_id": "100100",
+    "title": "Chapter 3 Reading Response",
+    "weight": 1
+   }
+  ]
+ },
+ "/sections/{section_id}/grading_categories/{id}": {
+  "delta": 1,
+  "id": 100001,
+  "realm": "section",
+  "realm_id": "100100",
+  "title": "Chapter 3 Reading Response"
+ },
+ "/sections/{section_id}/grading_periods": {
+  "grading_period": [
+   {
+    "end": "2026-10-14 10:00:00",
+    "has_children": 1,
+    "id": 100001,
+    "parent": 1,
+    "start": "2026-10-14 09:00:00",
+    "title": "Chapter 3 Reading Response",
+    "weight": 1
+   }
+  ],
+  "links": {
+   "self": "https://api.schoology.com/v1/users/100001"
+  }
+ },
+ "/sections/{section_id}/grading_scales": {
+  "grading_scale": [
+   {
+    "auto_averaging": 1,
+    "hide_numeric": 1,
+    "id": 100001,
+    "scale": {
+     "level": [
+      {
+       "average": 1,
+       "cutoff": 1,
+       "grade": "92"
+      },
+      {
+       "average": 1,
+       "cutoff": 1,
+       "grade": "92"
+      }
+     ]
+    },
+    "title": "Chapter 3 Reading Response",
+    "type": 1
+   },
+   {
+    "auto_averaging": 1,
+    "hide_numeric": 1,
+    "id": 100001,
+    "scale": {
+     "level": [
+      {
+       "average": 1,
+       "cutoff": 1,
+       "grade": "92"
+      },
+      {
+       "average": 1.0,
+       "cutoff": 1,
+       "grade": "92"
+      }
+     ]
+    },
+    "title": "Chapter 3 Reading Response",
+    "type": 1
+   }
+  ],
+  "links": {
+   "self": "https://api.schoology.com/v1/users/100001"
+  }
+ },
+ "/sections/{section_id}/packages": {
+  "links": {
+   "self": "https://api.schoology.com/v1/users/100001"
+  },
+  "package": [],
+  "total": 2
+ },
+ "/sections/{section_id}/submissions/{grade_item_id}": {
+  "revision": []
+ },
+ "/sections/{section_id}/submissions/{grade_item_id}/{user_id}": {
+  "revision": []
+ },
+ "/sections/{section_id}/submissions/{grade_item_id}/{user_id}/comments": {
+  "comment": [],
+  "links": {
+   "self": "https://api.schoology.com/v1/users/100001"
+  },
+  "total": 2
+ },
+ "/sections/{section_id}/web_packages": {
+  "links": {
+   "self": "https://api.schoology.com/v1/users/100001"
+  },
+  "total": 2,
+  "web": []
  },
  "/users/ext/{id}": {
   "additional_buildings": "",
@@ -612,6 +1044,9 @@
    "self": "https://api.schoology.com/v1/users/100001"
   }
  },
+ "/users/{user_id}/invites/{realm}": {
+  "invite": []
+ },
  "/users/{user_id}/network": {
   "links": {
    "self": "https://api.schoology.com/v1/users/100001"
@@ -743,6 +1178,39 @@
    }
   ]
  },
+ "/{realm}/{realm_id}/albums": {
+  "album": [],
+  "links": {
+   "self": "https://api.schoology.com/v1/users/100001"
+  },
+  "total": 2
+ },
+ "/{realm}/{realm_id}/discussions": {
+  "discussion": [
+   {
+    "body": "Posted to the class stream.",
+    "comments_closed": 1,
+    "completion_status": "example",
+    "factor": 1,
+    "graded": 1,
+    "grading_scale": null,
+    "id": 100001,
+    "is_final": null,
+    "links": {
+     "self": "https://api.schoology.com/v1/users/100001"
+    },
+    "max_points": 100,
+    "require_initial_post": null,
+    "title": "Chapter 3 Reading Response",
+    "uid": 100001,
+    "weight": 1
+   }
+  ],
+  "links": {
+   "self": "https://api.schoology.com/v1/users/100001"
+  },
+  "total": 2
+ },
  "/{realm}/{realm_id}/discussions/{post_id}": {
   "body": "Posted to the class stream.",
   "comments_closed": 1,
@@ -788,6 +1256,16 @@
    }
   ]
  },
+ "/{realm}/{realm_id}/discussions/{post_id}/comments/{comment_id}": {
+  "comment": "Thanks -- resubmitted with the corrected chart.",
+  "created": 1760000000,
+  "id": 100001,
+  "likes": 1,
+  "parent_id": 1,
+  "status": 1,
+  "uid": 100001,
+  "user_like_action": true
+ },
  "/{realm}/{realm_id}/documents": {
   "document": [
    {
@@ -817,15 +1295,28 @@
    },
    {
     "attachments": {
-     "links": {
-      "link": [
+     "files": {
+      "file": [
        {
-        "display_inline": 1,
+        "converted_download_path": "https://example.edu/resource",
+        "converted_extension": "example",
+        "converted_filemime": "example",
+        "converted_filename": "example",
+        "converted_filesize": 1,
+        "converted_md5_checksum": "example",
+        "converted_status": "1",
+        "converted_type": 1,
+        "download_path": "https://api.schoology.com/v1/attachment/100002/source",
+        "extension": "pdf",
+        "fid": null,
+        "filemime": "application/pdf",
+        "filename": "reading-response.pdf",
+        "filesize": 184320,
         "id": 100001,
-        "summary": "example",
+        "md5_checksum": "9f86d081884c7d659a2feaa0c55ad015",
+        "timestamp": 1760000000,
         "title": "Chapter 3 Reading Response",
-        "type": "assignment",
-        "url": "https://example.edu/resource"
+        "type": "assignment"
        }
       ]
      }
@@ -846,6 +1337,31 @@
   },
   "total": 2
  },
+ "/{realm}/{realm_id}/documents/{id}": {
+  "attachments": {
+   "links": {
+    "link": [
+     {
+      "display_inline": 1,
+      "id": 100001,
+      "summary": "example",
+      "title": "Chapter 3 Reading Response",
+      "type": "assignment",
+      "url": "https://example.edu/resource"
+     }
+    ]
+   }
+  },
+  "available": 1,
+  "completed": 1,
+  "completion_status": "example",
+  "course_fid": 1,
+  "display_weight": 1,
+  "grade_item_id": "100400",
+  "id": 100001,
+  "published": 1,
+  "title": "Chapter 3 Reading Response"
+ },
  "/{realm}/{realm_id}/events": {
   "event": [],
   "links": {
@@ -855,6 +1371,8 @@
  },
  "/{realm}/{realm_id}/events/{id}": {
   "all_day": 1,
+  "assignment_id": 100400,
+  "assignment_type": null,
   "comments_enabled": 1,
   "description": "Read the chapter and answer the three prompts.",
   "editable": 1,
@@ -863,41 +1381,45 @@
   "id": 100001,
   "realm": "section",
   "rsvp": 1,
+  "section_id": 100100,
   "start": "2026-10-14 09:00:00",
   "title": "Chapter 3 Reading Response",
   "type": "assignment",
-  "user_id": 100001
+  "web_url": "https://example.edu/resource"
  },
  "/{realm}/{realm_id}/folder/{folder_id}": {
   "folder-item": [
    {
     "available": 1,
     "body": "Posted to the class stream.",
+    "color": "example",
     "completed": 1,
     "completion_status": "example",
-    "document_type": "example",
     "has_rules": 1,
     "id": 100001,
     "location": "https://api.schoology.com/v1/users/100001",
+    "publish_end": "example",
+    "publish_start": "example",
+    "status": 1,
+    "title": "Chapter 3 Reading Response",
+    "type": "assignment"
+   },
+   {
+    "available": 1,
+    "body": "Posted to the class stream.",
+    "color": "example",
+    "completed": 1,
+    "completion_status": "example",
+    "has_rules": 1,
+    "id": 100001,
+    "location": "https://api.schoology.com/v1/users/100001",
+    "publish_end": "example",
+    "publish_start": "example",
+    "status": 1,
     "title": "Chapter 3 Reading Response",
     "type": "assignment"
    }
   ],
-  "parent": {
-   "available": 1,
-   "body": "Posted to the class stream.",
-   "color": "example",
-   "completed": 1,
-   "completion_status": "example",
-   "has_rules": 1,
-   "id": 100001,
-   "location": "https://api.schoology.com/v1/users/100001",
-   "publish_end": "example",
-   "publish_start": "example",
-   "status": 1,
-   "title": "Chapter 3 Reading Response",
-   "type": "assignment"
-  },
   "self": {
    "available": 1,
    "body": "Posted to the class stream.",
@@ -913,6 +1435,9 @@
    "title": "Chapter 3 Reading Response",
    "type": "assignment"
   }
+ },
+ "/{realm}/{realm_id}/posts": {
+  "post": []
  },
  "/{realm}/{realm_id}/resources": {
   "links": {
@@ -948,7 +1473,32 @@
   "links": {
    "self": "https://api.schoology.com/v1/users/100001"
   },
-  "update": []
+  "update": [
+   {
+    "body": "Posted to the class stream.",
+    "created": 1760000000,
+    "group_id": 100300,
+    "id": 100001,
+    "last_updated": "1760086400",
+    "likes": 1,
+    "num_comments": 1,
+    "realm": "section",
+    "uid": 100001,
+    "user_like_action": true
+   },
+   {
+    "body": "Posted to the class stream.",
+    "created": 1760000000,
+    "group_id": 100300,
+    "id": 100001,
+    "last_updated": "1760086400",
+    "likes": 1,
+    "num_comments": 1,
+    "realm": "section",
+    "uid": 100001,
+    "user_like_action": true
+   }
+  ]
  },
  "/{realm}/{realm_id}/updates/{update_id}": {
   "body": "Posted to the class stream.",

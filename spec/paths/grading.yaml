@@ -49,7 +49,6 @@ GradingPeriodItem:
   get:
     tags: [Grading]
     summary: Get a grading period (admin)
-    x-verified: true
     operationId: getGradingPeriod
     x-student-access: ok
     parameters:
@@ -194,7 +193,7 @@ SectionGradingCategory:
     tags: [Grading]
     summary: Get a grading category
     operationId: getSectionGradingCategory
-    x-student-access: unknown
+    x-student-access: ok
     parameters:
       - $ref: '../components/parameters/_index.yaml#/section_id'
       - $ref: '../components/parameters/_index.yaml#/id'
@@ -560,7 +559,7 @@ SectionCompletionUser:
       View the completion object for a particular user in the section. A student
       can read their own record.
     operationId: getSectionCompletionUser
-    x-student-access: unknown
+    x-student-access: ok
     parameters:
       - $ref: '../components/parameters/_index.yaml#/section_id'
       - $ref: '../components/parameters/_index.yaml#/user_id'

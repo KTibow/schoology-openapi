@@ -1064,9 +1064,15 @@ PageItem:
   get:
     tags: [Pages]
     summary: Get a page
-    description: Note the singular `page` path segment (the list is `pages`).
+    description: >
+      > [!CAUTION]
+      > The official documentation gives this path a singular `page` segment.
+      > That form does not work: `GET /sections/{id}/page/{page_id}` answers
+      > `200` with the **section** object, not the page, because an
+      > unrecognised subresource falls back to the realm object instead of
+      > `404`. Use `pages/{id}`.
     operationId: getPage
-    x-student-access: unknown
+    x-student-access: ok
     parameters:
       - $ref: '../components/parameters/_index.yaml#/realm_id'
       - $ref: '../components/parameters/_index.yaml#/id'

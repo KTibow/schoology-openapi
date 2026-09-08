@@ -35,8 +35,25 @@ push to `main`.
 
 ### Live probing (optional)
 
-`scripts/probe*.py` read a live account to check response shapes against the
-schemas. They need credentials in `.env` (gitignored):
+`scripts/probe.py` reads a live account to check the spec against reality. It
+walks every `GET` in the spec, records what came back, and keeps the body:
+
+```sh
+python3 scripts/probe.py
+```
+
+The status goes to `probe/_access.json`, which `apply_access.py` turns into
+`x-student-access`; the body goes to `probe/_index.json` and `probe/*.json`,
+which `verify_live.py` checks against the schema and `gen_examples.py` turns
+into examples. One request answers both questions, which matters here — a
+status alone cannot tell a working endpoint from a typo, since Schoology
+answers `200` with the realm object for a subresource it does not recognise.
+
+`x-student-access` means one thing: this exact request was made with a live
+student account and this is what came back. Anything not observed stays
+`unknown`, including every non-GET operation.
+
+It needs credentials in `.env` (gitignored):
 
 ```
 SC_KEY_75=<consumer key>
@@ -45,7 +62,7 @@ TOKEN_KEY=<access token key>
 TOKEN_SECRET=<access token secret>
 ```
 
-They only ever issue GETs, and they write responses to `probe/` (also
+It only ever issues GETs, and it writes responses to `probe/` (also
 gitignored). Keep it that way: nothing derived from a real account — ids
 included — belongs in a commit. `spec/examples.json` is committed but
 generated, taking only key names and JSON types from `probe/` and every scalar
