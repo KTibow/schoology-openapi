@@ -30,7 +30,6 @@ MessageRecipients:
     description: Valid message recipients for the signed-in user.
     operationId: listMessageRecipients
     x-student-access: ok
-    x-verified: true
     responses:
       '200':
         description: Recipient list.

@@ -196,6 +196,10 @@ Discussion:
     due: { type: [string, "null"] }
     grade_item_id: { $ref: 'common.yaml#/NullableSchoologyId' }
     grading_scale: { type: [integer, string, "null"] }
+    grading_scale_type: { type: [integer, string, "null"], description: Undocumented; appears on discussions in the group and school realms. }
+    folder_id: { $ref: 'common.yaml#/NullableSchoologyId', description: Materials folder the thread sits in. }
+    display_weight: { type: [integer, string, "null"], description: Sort weight in materials. }
+    dropbox_locked: { $ref: 'common.yaml#/BinaryFlag', description: Undocumented; appears on graded discussions in a section. }
     grading_period: { type: [integer, string, "null"] }
     grading_category: { type: [integer, string, "null"] }
     max_points: { type: [number, string, "null"] }
@@ -522,6 +526,8 @@ MediaAlbum:
     setting_comments: { $ref: 'common.yaml#/BinaryFlag' }
     setting_member_post: { $ref: 'common.yaml#/BinaryFlag' }
     published: { $ref: 'common.yaml#/BinaryFlag' }
+    folder_id: { $ref: 'common.yaml#/NullableSchoologyId', description: Materials folder the album sits in. }
+    display_weight: { type: [integer, string, "null"], description: Sort weight in materials. }
     photo_count: { type: [integer, string] }
     video_count: { type: [integer, string] }
     audio_count: { type: [integer, string] }
@@ -571,6 +577,7 @@ MediaContent:
   properties:
     id: { $ref: 'common.yaml#/SchoologyId' }
     album_id: { $ref: 'common.yaml#/SchoologyId' }
+    uid: { $ref: 'common.yaml#/SchoologyId', description: User who added the item. }
     type: { type: [string, "null"], description: "`image`, `video`, `audio`." }
     caption: { type: [string, "null"] }
     display_order: { type: [integer, string, "null"] }

@@ -222,6 +222,7 @@ UsersExt:
       following it.
     operationId: getUserByExtId
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/ext_id'
     responses:
@@ -465,7 +466,6 @@ UserFriendRequests:
       accepts).
     operationId: listFriendRequests
     x-student-access: ok
-    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/user_id'
       - name: created_offset

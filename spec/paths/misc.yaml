@@ -22,6 +22,7 @@ RoleItem:
     summary: Get a role
     operationId: getRole
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/id'
     responses:
@@ -111,7 +112,7 @@ LikeComment:
     tags: [Likes & polls]
     summary: List users who liked a comment
     operationId: listCommentLikes
-    x-student-access: unknown
+    x-student-access: forbidden
     parameters:
       - $ref: '../components/parameters/_index.yaml#/id'
       - $ref: '../components/parameters/_index.yaml#/comment_id'
@@ -352,6 +353,7 @@ RecentFeed:
       update collections.
     operationId: listRecentFeed
     x-student-access: ok
+    x-verified: true
     responses:
       '200':
         description: A paged collection of updates from every realm the user belongs to.

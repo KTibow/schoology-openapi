@@ -28,6 +28,7 @@ Discussions:
       `with_attachments` and `with_tags`.
     operationId: listDiscussions
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/realm_id'
       - $ref: '../components/parameters/_index.yaml#/start'
@@ -198,6 +199,7 @@ DiscussionComment:
     summary: Get a discussion reply
     operationId: getDiscussionComment
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/realm_id'
       - $ref: '../components/parameters/_index.yaml#/post_id'
@@ -302,6 +304,7 @@ DocumentItem:
     summary: Get a document
     operationId: getDocument
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/realm_id'
       - $ref: '../components/parameters/_index.yaml#/id'
@@ -546,6 +549,7 @@ UpdateItem:
     summary: Get an update
     operationId: getUpdate
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/realm_id'
       - $ref: '../components/parameters/_index.yaml#/update_id'
@@ -611,6 +615,7 @@ UpdateComments:
     summary: List update comments
     operationId: listUpdateComments
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/realm_id'
       - $ref: '../components/parameters/_index.yaml#/update_id'
@@ -662,7 +667,8 @@ UpdateComment:
     tags: [Updates]
     summary: Get an update comment
     operationId: getUpdateComment
-    x-student-access: unknown
+    x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/realm_id'
       - $ref: '../components/parameters/_index.yaml#/update_id'
@@ -708,6 +714,7 @@ Albums:
     description: '`withcontent=1` includes the contents of each album in the response.'
     operationId: listAlbums
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/realm_id'
       - $ref: '../components/parameters/_index.yaml#/start'
@@ -760,7 +767,8 @@ AlbumItem:
     tags: [Media albums]
     summary: Get a media album
     operationId: getAlbum
-    x-student-access: unknown
+    x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/realm_id'
       - $ref: '../components/parameters/_index.yaml#/album_id'
@@ -769,7 +777,7 @@ AlbumItem:
         description: An album.
         content:
           application/json:
-            schema: { $ref: '../components/schemas/_index.yaml#/MediaAlbumCollection' }
+            schema: { $ref: '../components/schemas/_index.yaml#/MediaAlbum' }
       '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
       '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
       '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
@@ -857,7 +865,8 @@ AlbumContentItem:
     tags: [Media albums]
     summary: Get media album content
     operationId: getAlbumContent
-    x-student-access: unknown
+    x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/realm_id'
       - $ref: '../components/parameters/_index.yaml#/album_id'
@@ -867,7 +876,7 @@ AlbumContentItem:
         description: Album content.
         content:
           application/json:
-            schema: { $ref: '../components/schemas/_index.yaml#/MediaContentCollection' }
+            schema: { $ref: '../components/schemas/_index.yaml#/MediaContent' }
       '401': { $ref: '../components/responses/_index.yaml#/Unauthorized' }
       '403': { $ref: '../components/responses/_index.yaml#/Forbidden' }
       '404': { $ref: '../components/responses/_index.yaml#/NotFound' }
@@ -927,7 +936,7 @@ AlbumComments:
     tags: [Media albums]
     summary: List media album content comments
     operationId: listAlbumComments
-    x-student-access: unknown
+    x-student-access: ok
     parameters:
       - $ref: '../components/parameters/_index.yaml#/realm_id'
       - $ref: '../components/parameters/_index.yaml#/album_id'
@@ -1073,6 +1082,7 @@ PageItem:
       > `404`. Use `pages/{id}`.
     operationId: getPage
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/realm_id'
       - $ref: '../components/parameters/_index.yaml#/id'

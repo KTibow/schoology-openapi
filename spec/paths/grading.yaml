@@ -51,6 +51,7 @@ GradingPeriodItem:
     summary: Get a grading period (admin)
     operationId: getGradingPeriod
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/grading_period_id'
     responses:
@@ -106,6 +107,7 @@ SectionGradingPeriods:
 
     operationId: listSectionGradingPeriods
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/section_id'
     responses:
@@ -127,6 +129,7 @@ SectionGradingCategories:
       ungraded.
     operationId: listSectionGradingCategories
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/section_id'
     responses:
@@ -194,6 +197,7 @@ SectionGradingCategory:
     summary: Get a grading category
     operationId: getSectionGradingCategory
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/section_id'
       - $ref: '../components/parameters/_index.yaml#/id'
@@ -251,6 +255,7 @@ SectionGradingScales:
     description: Grading scales usable in the section.
     operationId: listSectionGradingScales
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/section_id'
     responses:
@@ -560,6 +565,7 @@ SectionCompletionUser:
       can read their own record.
     operationId: getSectionCompletionUser
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/section_id'
       - $ref: '../components/parameters/_index.yaml#/user_id'

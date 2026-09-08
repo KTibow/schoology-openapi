@@ -18,7 +18,7 @@ Rules (fail loud):
 10. Every response example must validate against its own response schema.
 11. `x-verified: true` implies `x-student-access` is not `unknown`.
 """
-import json, os, re, sys, copy
+import os, re, sys
 
 try:
     import yaml

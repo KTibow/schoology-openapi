@@ -9,6 +9,7 @@ SectionsCollection:
 
     operationId: listSectionsBySchoolCode
     x-student-access: ok
+    x-verified: true
     parameters:
       - name: section_school_codes
         in: query
@@ -156,6 +157,7 @@ SectionsExt:
 
     operationId: getSectionByExtId
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/ext_id'
     responses:

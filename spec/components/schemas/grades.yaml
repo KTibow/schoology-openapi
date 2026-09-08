@@ -67,17 +67,25 @@ FinalCommentsInput:
             required: [enrollment_id, period_id, comment]
             properties:
               enrollment_id: { $ref: 'common.yaml#/SchoologyId' }
-              period_id: { $ref: 'common.yaml#/SchoologyId', description: 'Grading period ID, or the literal `final` for the course final grade.' }
+              period_id: { $ref: '#/GradingPeriodRef' }
               comment: { type: string }
               comment_status: { $ref: 'common.yaml#/BinaryFlag', description: Visible to the student; default `0`. }
             additionalProperties: false
       additionalProperties: false
   additionalProperties: false
+GradingPeriodRef:
+  type: string
+  title: Grading period reference
+  description: >
+    Identifies what a grade block covers. Not a plain ID: `p{grading_period_id}`
+    for a grading period, `a{assignment_id}` where the block belongs to a single
+    assignment, or the literal `final` for the course final grade. `other` also
+    appears. Match on the prefix rather than parsing it as a number.
 PeriodGrade:
   type: object
   description: Per-period grade/comment for one enrollment (section grades response).
   properties:
-    period_id: { type: string, description: "`p{grading_period_id}`, `other`, or `final`." }
+    period_id: { $ref: '#/GradingPeriodRef' }
     grade: { type: [number, string, "null"] }
     comment: { type: [string, "null"] }
     comment_status: { type: [integer, string, "null"] }
@@ -106,7 +114,7 @@ SectionGrades:
       items:
         type: object
         properties:
-          period_id: { $ref: 'common.yaml#/SchoologyId', examples: [p13011] }
+          period_id: { $ref: '#/GradingPeriodRef' }
           period_title: { type: [string, "null"] }
           weight: { type: [integer, string, "null"] }
         additionalProperties: false
@@ -118,7 +126,7 @@ UserGradesPeriod:
   type: object
   description: A grading period inside a section of the user grade listing.
   properties:
-    period_id: { $ref: 'common.yaml#/SchoologyId' }
+    period_id: { $ref: '#/GradingPeriodRef' }
     period_title: { type: [string, "null"] }
     assignment: { type: [array, "null"], items: { $ref: '#/GradeEntry' } }
   additionalProperties: false
@@ -126,7 +134,7 @@ UserGradesFinalGrade:
   type: object
   description: Final grade block for a period, with per-category grades.
   properties:
-    period_id: { $ref: 'common.yaml#/SchoologyId' }
+    period_id: { $ref: '#/GradingPeriodRef' }
     grade: { type: [number, string, "null"] }
     weight: { type: [integer, number, string, "null"] }
     comment: { type: [string, "null"] }

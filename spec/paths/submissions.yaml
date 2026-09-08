@@ -164,6 +164,7 @@ SubmissionComments:
     summary: List submission comments
     operationId: listSubmissionComments
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/section_id'
       - $ref: '../components/parameters/_index.yaml#/grade_item_id'

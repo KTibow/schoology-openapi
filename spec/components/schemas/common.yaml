@@ -1,12 +1,21 @@
 SchoologyId:
   type: [integer, string]
+  pattern: '^\d+$'
   title: Schoology ID
   description: >
     An internal Schoology object ID. Depending on the endpoint the same ID
     arrives as a JSON integer or as a numeric string, so both are accepted;
-    clients should coerce to one representation before comparing.
+    clients should coerce to one representation before comparing. The string
+    form is always digits.
+
+
+    IDs are scoped to their object type, not shared across the API: an
+    assignment ID used where an event ID belongs does not resolve, and reads
+    the same as an ID that does not exist. Do not carry an ID from one
+    endpoint into another endpoint's path.
 NullableSchoologyId:
   type: [integer, string, "null"]
+  pattern: '^\d+$'
   title: Schoology ID (nullable)
   description: >
     Like `SchoologyId`, but the field is omitted-as-null when the object has no

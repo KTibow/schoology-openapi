@@ -7,6 +7,7 @@ GroupsCollection:
       building.
     operationId: listGroups
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/start'
       - $ref: '../components/parameters/_index.yaml#/limit'
@@ -50,6 +51,7 @@ GroupItem:
     description: View a specified group.
     operationId: getGroup
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/group_id'
       - $ref: '../components/parameters/_index.yaml#/picture_size'

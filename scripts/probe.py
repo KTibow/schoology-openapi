@@ -16,14 +16,14 @@ because `/sections/{id}/…` answers `200` with the section object for a
 subresource Schoology does not recognise. Access and shape have to be judged
 together or neither is trustworthy.
 
-There used to be a second, hand-written pass naming endpoints to fetch. It is
-gone — everything it reached, this reaches — and a curated list quietly stops
-covering whatever gets added to the spec after it was written. What cannot be
-derived from the path shape is declared in FOREIGN_IDS instead.
+Endpoints are not listed anywhere: the walk covers whatever the spec declares,
+so an operation added tomorrow is probed without touching this file. The few
+ids that cannot be derived from a path's shape are declared in FOREIGN_IDS and
+PARAM_SOURCE.
 
 Every id is derived from `/users/me` and the collections hanging off it, so no
 real school's identifiers are written down here. `probe/` is gitignored; keep
-it that way. See scripts/probe_lib.py.
+it that way.
 
 Usage:
   python3 scripts/probe.py
@@ -36,7 +36,6 @@ import time
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import probe_lib  # noqa: E402
 import sgy  # noqa: E402
 
 # Progress goes to a redirected file as often as to a terminal, and block
@@ -52,6 +51,33 @@ DELAY = 0.25  # be a polite guest on someone else's school's API
 # Enrolled section ids, filled by discover(). resolve() falls back through them
 # when the section in scope has none of the objects it is looking for.
 SECTION_IDS = []
+
+# How many sections to draw fixtures from. Every lookup stops at the first
+# section that has records, so a wider pool only costs requests for material
+# this account does not have anywhere.
+SECTION_POOL = 20
+
+# Ids consulted only through FOREIGN_IDS. Kept out of the main pool because a
+# path like `/{realm}/{realm_id}/updates/{update_id}` needs an update from the
+# realm in scope, while `/like/{id}` takes any update at all.
+FOREIGN_POOL = {}
+
+# Parameters listed by a sibling collection rather than by the path they sit in:
+# `/sections/{id}/submissions/{grade_item_id}` cannot yield a grade item, because
+# the listing is `/sections/{id}/grade_items`. Looking there keeps the id and the
+# section that owns it together, which seeding a global value does not.
+PARAM_SOURCE = {"grade_item_id": "grade_items"}
+
+# Concrete collection URLs already fetched that held no records. Without this the
+# same fruitless hunt runs again for every operation needing that id -- ~40
+# requests each, since it walks the whole section pool before giving up.
+_EMPTY = set()
+
+# The parameter resolve() actually gave up on, for reporting. Listing every
+# parameter that was not pre-seeded names the wrong ones: `grade_item_id` is
+# resolved from a sibling collection at request time and is never seeded, so it
+# looked like the blocker on paths whose real problem was a missing comment id.
+_UNRESOLVED = []
 
 # Index keys are named after the operation they came from. They become
 # filenames, so the prefix avoids characters Windows rejects.
@@ -69,6 +95,9 @@ FOREIGN_IDS = {
     "getSectionByExtId":        {"id": "section_school_codes"},
     # The trailing {id} repeats the section id rather than naming a new object.
     "getSectionCompletionUser": {"id": "section_id"},
+    # `/gradingperiods` is admin-only, so the id has to come from a section the
+    # student is in; the endpoint itself is global and takes any of them.
+    "getGradingPeriod":         {"grading_period_id": "grading_period_id"},
 }
 
 # Which discovered id fills {realm_id} for each {realm} value.
@@ -89,9 +118,27 @@ REALM_ID = {
 # shared plumbing
 # --------------------------------------------------------------------------
 
+def fetch(path):
+    """GET, retrying a burst rate-limit rather than recording it as a result.
+
+    Schoology throttles short bursts, and `resolve()` fires several requests
+    back to back while hunting for a fixture id. A 429 is a failed measurement,
+    not an answer: recorded as-is it demotes an operation to `unknown` and wipes
+    out a real observation from an earlier run.
+    """
+    for attempt in range(4):
+        status, headers, raw = sgy.get(path)
+        if status != 429:
+            return status, headers, raw
+        wait = float((headers or {}).get("Retry-After") or 0) or 2 ** attempt
+        print(f"[429, waiting {wait:g}s] ", end="")
+        time.sleep(wait)
+    return status, headers, raw
+
+
 def get_json(path):
     """GET following redirects (/users/me answers 303 and must be re-signed)."""
-    s, _, b = sgy.get(path)
+    s, _, b = fetch(path)
     if s != 200:
         return s, None
     try:
@@ -103,11 +150,10 @@ def get_json(path):
 class Corpus:
     """Records every probe into probe/_index.json and saves the body.
 
-    One recorder for both passes. They used to each own a `probe()`: one wrote
-    bodies without registering them, another registered without saving, and the
-    evidence that fell between them was invisible to apply_access.py --
-    `getSectionCompletionUser` sat at `unknown` for months with a 200 response
-    on disk.
+    Every probe goes through here, so a response cannot be saved without being
+    registered or vice versa. Splitting those two jobs is what once left
+    `getSectionCompletionUser` at `unknown` for months with a 200 response
+    sitting on disk that nothing read.
 
     `owns` says which index keys this pass is responsible for. Saving keeps the
     other pass's entries and drops this pass's stale ones, so a probe that is
@@ -154,6 +200,16 @@ class Corpus:
 # --------------------------------------------------------------------------
 # sweep pass: every GET in the spec, status only
 # --------------------------------------------------------------------------
+
+def records(body, wrapper):
+    """The list under `wrapper` in a collection body (`[]` when absent)."""
+    if not isinstance(body, dict):
+        return []
+    items = body.get(wrapper)
+    if isinstance(items, dict):          # single record, unwrapped by the API
+        return [items]
+    return items if isinstance(items, list) else []
+
 
 def first_id(body, *keys):
     """First id under any of `keys` in a Schoology collection wrapper."""
@@ -213,11 +269,19 @@ def discover():
     ids["school_uid"] = me.get("school_uid")
     uid = ids.get("user_id")
 
+    # Past enrollments too: a current section can be empty of pages, albums or
+    # updates while last year's is full of them, and an expired section stays
+    # readable. Current sections come first so a live one is preferred when
+    # both have records.
     _, secs = get_json(f"/v1/users/{uid}/sections")
-    section_ids = [str(r["id"]) for r in probe_lib.records(secs, "section")
+    _, allsecs = get_json(f"/v1/users/{uid}/sections?include_past=1")
+    section_ids = [str(r["id"]) for r in records(secs, "section")
                    if isinstance(r, dict) and r.get("id")]
+    for r in records(allsecs, "section"):
+        if isinstance(r, dict) and r.get("id") and str(r["id"]) not in section_ids:
+            section_ids.append(str(r["id"]))
     sid = section_ids[0] if section_ids else None
-    SECTION_IDS[:] = section_ids[:4]
+    SECTION_IDS[:] = section_ids[:SECTION_POOL]
     ids["section_id"] = sid
     ids["realm_id"] = sid
     ids["realm"] = "sections"
@@ -228,57 +292,13 @@ def discover():
     _, grps = get_json(f"/v1/users/{uid}/groups")
     ids["group_id"] = first_id(grps, "group")
 
-    # NB: never seed a bare `id`. It means a different object in every path,
-    # and a stale one silently defeats the per-template discovery below --
-    # `/{realm}/{realm_id}/events/{id}` probed with a *document* id answers 403,
-    # which looks exactly like a permission failure.
-    #
-    # Try every enrolled section, not just the first. Content is unevenly
-    # distributed: this account's first section holds four assignments and zero
-    # pages, albums, updates or grading categories, so a single-section pool
-    # leaves a dozen item endpoints unprobed for want of anything to point at.
-    for path, key, param in [
-        ("assignments", "assignment", "assignment_id"),
-        ("discussions", "discussion", "post_id"),
-        ("updates", "update", "update_id"),
-        ("events", "event", "event_id"),
-        ("grading_categories", "grading_category", "grading_category_id"),
-        ("grading_periods", "grading_period", "grading_period_id"),
-        ("albums", "album", "album_id"),
-        ("pages", "page", "page_id"),
-        ("posts", "post", "post_id"),
-    ]:
-        for candidate in section_ids[:4]:
-            _, body = get_json(f"/v1/sections/{candidate}/{path}")
-            v = first_id(body, key)
-            time.sleep(DELAY)
-            if v is not None:
-                ids.setdefault(param, v)
-                # Probe the item in the section that actually has one.
-                if param in ("assignment_id", "post_id", "update_id", "album_id",
-                             "page_id", "event_id"):
-                    ids.setdefault("_realm_for_" + param, candidate)
-                break
-    ids.setdefault("grade_item_id", ids.get("assignment_id"))
-
-    # Realm-generic material lives wherever the account happens to have it. A
-    # student's sections can hold no updates at all while a club group holds
-    # fifteen, so fall back to the group realm for anything the sections could
-    # not supply.
-    if ids.get("group_id"):
-        for path, key, param in [
-            ("updates", "update", "update_id"),
-            ("discussions", "discussion", "post_id"),
-            ("albums", "album", "album_id"),
-            ("posts", "post", "post_id"),
-        ]:
-            if param in ids:
-                continue
-            _, body = get_json(f"/v1/groups/{ids['group_id']}/{path}")
-            time.sleep(DELAY)
-            v = first_id(body, key)
-            if v is not None:
-                ids[param] = v
+    # Item ids are deliberately NOT seeded here. resolve() derives each one from
+    # the collection that lists it, which keeps the item and the realm it lives
+    # in together. Seeding them globally pairs an id discovered in one section
+    # with whichever section happens to be in scope, and Schoology answers that
+    # mismatch with 403 -- indistinguishable from a permission failure, and it
+    # silently demoted four operations to `forbidden` when the fixture pool grew
+    # to include past sections that hold content the current ones do not.
 
     _, cols = get_json("/v1/collections")
     ids["collection_id"] = first_id(cols, "collection")
@@ -300,6 +320,32 @@ def discover():
     _, school = get_json(f"/v1/schools/{ids.get('school_id')}")
     if isinstance(school, dict) and school.get("district_id"):
         ids["district_id"] = school["district_id"]
+
+    # An update from wherever the account has one, for /like/{id}.
+    FOREIGN_POOL.clear()
+    for realm, rid in (("groups", ids.get("group_id")), ("users", uid)):
+        if not rid or "update_id" in FOREIGN_POOL:
+            continue
+        _, body = get_json(f"/v1/{realm}/{rid}/updates")
+        time.sleep(DELAY)
+        upd = first_id(body, "update")
+        if upd is None:
+            continue
+        FOREIGN_POOL["update_id"] = upd
+        _, cbody = get_json(f"/v1/{realm}/{rid}/updates/{upd}/comments")
+        time.sleep(DELAY)
+        c = first_id(cbody, "comment")
+        if c is not None:
+            FOREIGN_POOL["update_comment_id"] = c
+
+    # A grading period id from a readable section, for the global endpoint.
+    for candidate in section_ids[:SECTION_POOL]:
+        _, body = get_json(f"/v1/sections/{candidate}/grading_periods")
+        time.sleep(DELAY)
+        gp = first_id(body, "grading_period")
+        if gp is not None:
+            FOREIGN_POOL["grading_period_id"] = gp
+            break
 
     ids["folder_id"] = 0          # documented root of the materials tree
     ids["type"] = "ungraded"      # reminders
@@ -330,6 +376,8 @@ def resolve(tmpl, scope, depth=0):
     resolves `post_id` from `.../discussions`.
     """
     scope = dict(scope)
+    if depth == 0:
+        _UNRESOLVED.clear()
     for _ in range(4):
         missing = [n for n in re.findall(r"\{([^}]+)\}", tmpl) if n not in scope]
         if not missing:
@@ -340,7 +388,10 @@ def resolve(tmpl, scope, depth=0):
         token = "{" + name + "}"
         prefix = tmpl[: tmpl.index(token) + len(token)]
         parent = prefix[: prefix.rindex("/" + token)]
-        candidates = [parent]
+        candidates = []
+        if name in PARAM_SOURCE:
+            candidates.append(parent.rsplit("/", 1)[0] + "/" + PARAM_SOURCE[name])
+        candidates.append(parent)
         # `/package/{id}` and `/page/{id}` are listed at the plural path.
         tail = parent.rsplit("/", 1)[-1]
         if tail and not tail.startswith("{"):
@@ -359,10 +410,12 @@ def resolve(tmpl, scope, depth=0):
             # hundreds of requests for a template with three unknown ids.
             for alt in (_section_variants(scope) if depth == 0 else [scope]):
                 parent_path = resolve(cand, alt, depth + 1)
-                if parent_path is None:
+                if parent_path is None or parent_path in _EMPTY:
                     continue
                 status, body = get_json("/v1" + parent_path)
                 time.sleep(DELAY)
+                if first_item_id(body) is None:
+                    _EMPTY.add(parent_path)
                 item = first_item_id(body)
                 if item is not None:
                     found = dict(alt, **{name: item})
@@ -370,6 +423,8 @@ def resolve(tmpl, scope, depth=0):
             if found:
                 break
         if not found:
+            if not _UNRESOLVED:
+                _UNRESOLVED.append(name)
             return None
         scope = found
     return None
@@ -481,13 +536,15 @@ def sweep():
             unprobed.append((oid, tmpl, [f"?{q}" for q in missing_q]))
             continue
 
+        print(f"  GET {tmpl:56} ", end="")
         outcomes, skipped = {}, []
         for var in variants:
             scope = dict(ids, **var)
             # Parameters whose value belongs to another resource entirely.
+            pool = dict(FOREIGN_POOL, **ids)
             for param, source in FOREIGN_IDS.get(oid, {}).items():
-                if source in ids:
-                    scope[param] = ids[source]
+                if source in pool:
+                    scope[param] = pool[source]
             # {realm_id} must be an id of whichever realm we are testing.
             if "realm" in var:
                 key = REALM_ID.get(var["realm"])
@@ -510,7 +567,7 @@ def sweep():
                 if needed:
                     candidate += "?" + "&".join(
                         f"{q}={urllib.parse.quote(str(ids[q]))}" for q in needed)
-                status, _, raw = sgy.get("/v1" + candidate)
+                status, _, raw = fetch("/v1" + candidate)
                 time.sleep(DELAY)
                 if attempt is None or status == 200:
                     attempt = (candidate, status, raw)
@@ -536,18 +593,19 @@ def sweep():
             if status == 200:
                 for qname, qval in optional_query_probes(doc, tmpl, op):
                     qs = ("&" if "?" in concrete else "?") + f"{qname}={qval}"
-                    qstatus, _, qraw = sgy.get("/v1" + concrete + qs)
+                    qstatus, _, qraw = fetch("/v1" + concrete + qs)
                     c.record(f"{key}+{qname}", "/v1" + concrete + qs, qstatus, qraw)
                     time.sleep(DELAY)
 
         if not outcomes:
-            missing = [n for n in re.findall(r"\{([^}]+)\}", tmpl) if n not in ids]
+            missing = list(_UNRESOLVED) or [n for n in re.findall(r"\{([^}]+)\}", tmpl)
+                                            if n not in ids]
             unprobed.append((oid, tmpl, missing or skipped))
+            print(f"not probed (no {', '.join(str(m) for m in (missing or skipped))})")
             continue
 
         results[oid] = {"path": tmpl, "outcomes": outcomes}
-        shown = " ".join(f"{k}={v}" for k, v in outcomes.items())
-        print(f"  GET {tmpl:56} {shown}")
+        print(" ".join(f"{k}={v}" for k, v in outcomes.items()))
 
     os.makedirs(PROBE_DIR, exist_ok=True)
     json.dump(results, open(ACCESS, "w"), indent=1, sort_keys=True)
@@ -556,8 +614,9 @@ def sweep():
     print(f"\nprobed {len(results)} of {len(gets)} GET operations -> {ACCESS}")
     if unprobed:
         print(f"\n{len(unprobed)} not probed (no id available for a path parameter).")
-        print("Usually the account simply has no such object -- an enrolled")
-        print("section with zero pages cannot answer whether getPage is allowed.")
+        print("Either the collection that lists the id is forbidden, or the")
+        print("account has no such object: a section with zero albums cannot")
+        print("answer whether getAlbum is allowed.")
         for oid, tmpl, missing in unprobed:
             print(f"  {oid:34} {tmpl:52} missing {missing}")
 

@@ -9,7 +9,7 @@
 2. Requests: hand-written bodies checked against the *Create / *Writable
    schemas, positive and negative. Needs nothing, so it runs in CI too.
 """
-import json, os, re, sys, yaml
+import json, os, re, sys
 from jsonschema import Draft202012Validator
 
 BUNDLE = json.load(open("dist/openapi.strict.json"))

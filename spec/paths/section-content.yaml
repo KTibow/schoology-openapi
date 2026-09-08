@@ -58,6 +58,7 @@ AssignmentItem:
     summary: Get an assignment
     operationId: getAssignment
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/section_id'
       - $ref: '../components/parameters/_index.yaml#/assignment_id'
@@ -119,6 +120,7 @@ AssignmentComments:
     summary: List assignment comments
     operationId: listAssignmentComments
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/section_id'
       - $ref: '../components/parameters/_index.yaml#/assignment_id'
@@ -202,6 +204,7 @@ GradeItems:
       `with_attachments` and `with_tags`.
     operationId: listGradeItems
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/section_id'
       - $ref: '../components/parameters/_index.yaml#/start'
@@ -224,6 +227,7 @@ GradeItem:
     summary: Get a grade item
     operationId: getGradeItem
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/section_id'
       - $ref: '../components/parameters/_index.yaml#/assignment_id'
@@ -246,6 +250,7 @@ ScormPackages:
     description: View a paged list of SCORM packages in the section.
     operationId: listScormPackages
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/section_id'
       - $ref: '../components/parameters/_index.yaml#/start'
@@ -300,6 +305,7 @@ WebPackages:
     description: View a paged list of web content packages in the section.
     operationId: listWebPackages
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/section_id'
       - $ref: '../components/parameters/_index.yaml#/start'

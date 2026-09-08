@@ -22,9 +22,34 @@ import re
 import sys
 
 ACCESS = "probe/_access.json"     # spec-driven sweep: operationId -> status
-INDEX = "probe/_index.json"       # older hand-written corpus: concrete paths
+INDEX = "probe/_index.json"       # saved response bodies: concrete paths
 BUNDLE = "dist/openapi.strict.json"
 METHODS = ("get", "post", "put", "delete", "patch")
+
+
+# A throttled or broken request measured nothing. Treating it as evidence turns
+# a transient 429 into `unknown` and erases an observation from an earlier run.
+UNINFORMATIVE = lambda st: st == 429 or st >= 500
+
+
+def empty_collection(key):
+    """Did this probe come back as a collection wrapper with no records?
+
+    An empty wrapper validates the collection schema and never touches the item
+    schema inside it, so it cannot back `x-verified`, which claims the response
+    shape was checked against a real one.
+    """
+    if not key:
+        return False
+    try:
+        body = json.load(open(f"probe/{key}.json"))
+    except (OSError, ValueError):
+        return False
+    if not isinstance(body, dict):
+        return False
+    lists = {k: v for k, v in body.items() if isinstance(v, list) and k != "links"}
+    scalars = [k for k, v in body.items() if not isinstance(v, (list, dict))]
+    return bool(lists) and not scalars and not any(lists.values())
 
 
 def verdict(status):
@@ -64,25 +89,30 @@ def main():
     # Evidence source 1: the spec-driven sweep, keyed by operationId. Each
     # record holds one status per scope (realm, reminder type, ...) probed.
     statuses, by_scope = {}, {}
+    unmeasured = set()
     for oid, rec in json.load(open(ACCESS)).items():
+        if rec["outcomes"] and all(UNINFORMATIVE(s) for s in rec["outcomes"].values()):
+            unmeasured.add(oid)
+            continue
         for scope, status in rec["outcomes"].items():
+            if UNINFORMATIVE(status):
+                continue
             statuses.setdefault(oid, set()).add(status)
             if scope != "-":
                 by_scope.setdefault(oid, {})[scope] = status
 
-    # Source 2: the older hand-written corpus. It reached a few item endpoints
-    # the sweep cannot (it has no id for a discussion post, say), so merging the
-    # two covers strictly more than either alone.
+    # Source 2: the saved response bodies. The sweep records a status per
+    # operation but a body per probe, and the bodies reach query-parameter
+    # variants the status map does not distinguish.
     verified = set()
     if os.path.exists(INDEX):
-        by_tmpl = {t: oid for oid, t in tmpl_of.items()}
-        for rec in json.load(open(INDEX)).values():
+        for key, rec in json.load(open(INDEX)).items():
             t = match_template(rec["path"], doc["paths"])
             if not t or "get" not in doc["paths"][t]:
                 continue
             oid = doc["paths"][t]["get"]["operationId"]
             statuses.setdefault(oid, set()).add(rec["status"])
-            if rec["status"] == 200:
+            if rec["status"] == 200 and not empty_collection(key):
                 verified.add(oid)
 
     # A 2xx anywhere proves reachability and outranks a 403 seen in another
@@ -103,7 +133,7 @@ def main():
             return None
         return verdicts
 
-    changes, unverified, mixed = [], [], []
+    changes, unverified, mixed, throttled, restored = [], [], [], [], []
     counts = {"ok": 0, "forbidden": 0, "unknown": 0}
     for path in sorted(glob.glob("spec/paths/*.yaml")):
         lines = open(path).read().splitlines(keepends=True)
@@ -131,6 +161,12 @@ def main():
             oid = lines[oid_i].split(":", 1)[1].strip()
             method = re.match(r"^  (\w+):", lines[start]).group(1)
 
+            # A GET whose every probe was throttled measured nothing this run.
+            # Leave whatever the last good run recorded rather than blanking it.
+            if method == "get" and oid in unmeasured:
+                throttled.append(oid)
+                continue
+
             # Non-GET is unknowable under a read-only probe policy, full stop.
             want = observed.get(oid, "unknown") if method == "get" else "unknown"
             have = lines[acc_i].split(":", 1)[1].strip()
@@ -152,11 +188,19 @@ def main():
             # saved 200 body. Anything else claiming it is unbacked.
             ver_i = next((i for i in block
                           if re.match(r"^    x-verified: ", lines[i])), None)
-            if ver_i is not None and not (oid in verified and method == "get"):
+            backed = oid in verified and method == "get"
+            if ver_i is not None and not backed:
                 # Defer the delete: `starts` indexes this list, so removing a
                 # line now would shift every later block.
                 drop.add(ver_i)
                 unverified.append((oid, method.upper()))
+            elif ver_i is None and backed:
+                # Symmetry: the annotation has to be able to come back, or a
+                # single throttled run strips it permanently. Appended to the
+                # access block, which is rewritten in place and so does not
+                # shift the line indices `starts` holds.
+                lines[acc_i] = lines[acc_i].rstrip("\n") + "\n    x-verified: true\n"
+                restored.append((oid, method.upper()))
         for i in sorted(drop, reverse=True):
             del lines[i]
         open(path, "w").write("".join(lines))
@@ -177,6 +221,15 @@ def main():
     print(f"\n  {len(mixed)} operations whose access differs by realm:")
     for oid, note in sorted(mixed):
         print(f"    {oid:28} " + "  ".join(f"{k}={v}" for k, v in sorted(note.items())))
+    if throttled:
+        print(f"\n  {len(throttled)} left untouched — every probe was throttled "
+              f"or errored, so this run measured nothing:")
+        for oid in sorted(set(throttled)):
+            print(f"    {oid}")
+    if restored:
+        print(f"\n  {len(restored)} x-verified restored (a live body backs them again):")
+        for oid, m in sorted(set(restored)):
+            print(f"    {oid:32} {m}")
     print(f"\n  {len(unverified)} unbacked x-verified removed:")
     for oid, m in sorted(unverified):
         print(f"    {oid:32} {m}")

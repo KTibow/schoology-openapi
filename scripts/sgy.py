@@ -1,5 +1,5 @@
 """Minimal Schoology API client: OAuth 1.0a PLAINTEXT, no deps (urllib)."""
-import base64, hashlib, json, os, time, urllib.request, urllib.parse, uuid, sys
+import json, os, time, urllib.request, urllib.parse, uuid, sys
 
 # load .env from repo root
 _envpath = os.path.join(os.path.dirname(__file__), "..", ".env")

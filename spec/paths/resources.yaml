@@ -42,6 +42,7 @@ CollectionItem:
     summary: Get a resource collection
     operationId: getCollection
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/collection_id'
     responses:
@@ -94,6 +95,7 @@ CollectionResources:
       (omit for the root); `with_attachments` includes attachments.
     operationId: listCollectionResources
     x-student-access: ok
+    x-verified: true
     parameters:
       - $ref: '../components/parameters/_index.yaml#/collection_id'
       - name: f
