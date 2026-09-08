@@ -16,7 +16,9 @@ SectionsCollection:
         description: Comma-separated section school codes (up to 50).
         schema: { type: string }
       - name: include_past
-        description: Include sections from expired grading periods.
+        description: >
+          Include sections from expired grading periods. Only `1` turns it on;
+          any other value is ignored.
         in: query
         schema: { type: string, enum: ["1"] }
     responses:

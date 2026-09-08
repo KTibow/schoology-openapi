@@ -328,7 +328,9 @@ UserSections:
   get:
     tags: [Users]
     summary: List a user's sections
-    description: View the sections the user is enrolled in.
+    description: >
+      View the sections the user is enrolled in. Only sections in a current
+      grading period come back unless you ask for `include_past`.
     operationId: listUserSections
     x-student-access: ok
     x-verified: true
@@ -336,6 +338,14 @@ UserSections:
       - $ref: '../components/parameters/_index.yaml#/user_id'
       - $ref: '../components/parameters/_index.yaml#/start'
       - $ref: '../components/parameters/_index.yaml#/limit'
+      - name: include_past
+        in: query
+        description: >
+          Include sections from expired grading periods, typically many more
+          than the current ones. Undocumented by Schoology, but accepted here.
+          Send it only when you want past sections: any value turns it on,
+          `0` included.
+        schema: { type: string, enum: ["1"] }
     responses:
       '200':
         description: A paged collection of sections.
