@@ -21,7 +21,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Sets up pnpm *and* the Node runtime, and runs `pnpm install` itself,
       # so it replaces pnpm/action-setup + actions/setup-node + an install
@@ -31,7 +31,7 @@ jobs:
           runtime: node@26
           cache: true
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
       - run: pip install pyyaml jsonschema referencing
@@ -51,9 +51,9 @@ jobs:
         working-directory: site
         run: pnpm build
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site/dist
 
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
