@@ -133,7 +133,14 @@
         telemetry: false,
         withDefaultFonts: false,
         hideDownloadButton: false,
-        documentDownloadType: 'json',
+        // `direct` renders a real <a href="./openapi.json">. The other modes
+        // (json/yaml/both) serialise the parsed document to a blob at click
+        // time, which gives a button with no href: nothing to right-click, and
+        // nothing to paste into an agent or a curl. The spec is already a
+        // static file served next to this page, and the README points people
+        // at that exact URL, so link to it rather than rebuilding it in the
+        // browser. Costs no format option here — only JSON is published.
+        documentDownloadType: 'direct',
         defaultOpenAllTags: false,
         metaData: {
           title: 'Schoology REST API — OpenAPI reference',
